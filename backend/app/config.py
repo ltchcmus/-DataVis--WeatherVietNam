@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     log_level: str = "INFO"
     gemini_model: str = "gemini-1.5-flash"
+    database_url: str = "postgresql://postgres:sluNj9HzkaG7POkX@db.edgshpdsmtzdaybkjpbz.supabase.co:5432/postgres"
 
     class Config:
         env_file = ".env"

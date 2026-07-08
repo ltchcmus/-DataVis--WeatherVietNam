@@ -10,6 +10,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.config import get_settings
 from app.routers.ai import router as ai_router
+from app.routers.execute import router as execute_router
+from app.routers.logs import router as logs_router
+from app.routers.history import router as history_router
+from app.routers.data import router as data_router
+from app.db.database import engine, Base
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -25,6 +30,14 @@ async def lifespan(app: FastAPI):
     logger.info(f"   Dataset path: {settings.dataset_path}")
     logger.info(f"   Gemini model: {settings.gemini_model}")
     logger.info("=" * 60)
+
+    # Khởi tạo DB tables
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables initialized successfully.")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+
 
     try:
         from app.services.dataset_service import dataset_service
@@ -74,12 +87,10 @@ app.add_middleware(
 )
 
 app.include_router(ai_router)
-
-# TODO (Thịnh): Uncomment khi làm xong các router dưới
-# app.include_router(execute_router)
-# app.include_router(logs_router)
-# app.include_router(history_router)
-# app.include_router(data_router)
+app.include_router(execute_router)
+app.include_router(logs_router)
+app.include_router(history_router)
+app.include_router(data_router)
 
 @app.get("/", tags=["Root"])
 async def root():
