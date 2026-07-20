@@ -21,6 +21,7 @@ class LogsResponse(BaseModel):
 
 class ConversationResponse(BaseModel):
     id: str
+    title: Optional[str]
     created_at: datetime
     updated_at: datetime
 

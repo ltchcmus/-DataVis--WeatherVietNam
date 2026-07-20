@@ -70,7 +70,22 @@ Copy file CSV vào:
 backend/data/dataset.csv
 ```
 
-### 5. Chạy server
+### 5. Khởi tạo Database và nạp dữ liệu (Data Pipeline)
+
+**Bước 5.1: Khởi tạo bảng trên Supabase**
+Chỉ cần chạy lệnh này **1 lần duy nhất** để tạo bảng `cities`, `weather_daily` và nạp tọa độ 1500 thành phố:
+```bash
+python init_supabase.py
+```
+
+**Bước 5.2: Chạy Data Pipeline để kéo thời tiết (Chạy lần đầu)**
+Sau khi tạo bảng xong, chạy lệnh sau để kéo thời tiết từ API về lưu vào DB, sau đó xuất ra file `data/dataset.csv`:
+```bash
+python run_pipeline_now.py
+```
+*Lưu ý: Quá trình này sẽ gọi API để tải thời tiết, lưu vào Supabase, sau đó xuất ra `data/dataset.csv`. Tùy số lượng thành phố mà sẽ mất từ vài giây đến 1-2 phút. Các ngày sau hệ thống sẽ tự động chạy lúc 2h sáng.*
+
+### 6. Chạy server AI (FastAPI)
 
 ```bash
 uvicorn app.main:app --reload --port 8000

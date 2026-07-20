@@ -1,94 +1,139 @@
 """
-routers/ai.py — HTTP Router cho /ai/chat
-Endpoint POST /ai/chat
-"""
+routers/ai.py — HTTP Router cho /ai/chat (SSE streaming)
 
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
+POST /ai/chat → Server-Sent Events stream (text/event-stream)
+Mỗi SSE event có dạng: data: <json_chunk>\n\n
+Event cuối cùng: data: [DONE]\n\n
+"""
+import json
+
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
+
+from app.db.database import get_db
 from app.schemas.chat import ChatRequest, ChatResponse, ErrorResponse
 from app.services.ai_service import ai_service
+from app.services.llm_service import llm_service
+from app.services.prompt_builder import PromptBuilder
+from app.services.dataset_service import dataset_service
+from app.services.response_parser import ResponseParser
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
-
 router = APIRouter(prefix="/ai", tags=["AI"])
+_prompt_builder = PromptBuilder()
+_response_parser = ResponseParser()
 
 
 @router.post(
     "/chat",
-    response_model=ChatResponse,
-    responses={
-        400: {"model": ErrorResponse, "description": "Bad Request"},
-        422: {"description": "Validation Error"},
-        500: {"model": ErrorResponse, "description": "LLM Error"},
-        503: {"model": ErrorResponse, "description": "Service Unavailable"},
-    },
-    summary="AI Chat",
+    summary="AI Chat (SSE Streaming)",
     description="""
-    AI Orchestrator endpoint.
-    
-    Nhận câu hỏi từ user → gọi Gemini → trả về response với status='pending'.
-    
-    **KHÔNG execute code.** Code được trả về trong field `code` để user review và approve.
-    Sau khi approve, frontend gọi `POST /execute` (Thịnh) với code đó.
-    
-    **Action types:**
-    - `answer`: Câu trả lời text thông thường
-    - `generate_code`: Sinh Python code phân tích dữ liệu
-    - `suggest_analysis`: Gợi ý các hướng phân tích
-    - `insight`: Nhận xét về dữ liệu
-    - `explain_code`: Giải thích code
+AI Orchestrator endpoint — trả về Server-Sent Events stream.
+
+**Cách dùng từ frontend:**
+```javascript
+const es = new EventSource('/ai/chat?...') // Hoặc dùng fetch + ReadableStream
+// Mỗi event: { type, chunk } — chunk cuối là full JSON response
+```
+
+**KHÔNG execute code.** Code được trả về trong field `code` để user review và approve.
     """,
 )
-async def chat(request: ChatRequest) -> ChatResponse:
-    """POST /ai/chat"""
-    logger.info(f"Incoming chat | dataset={request.dataset_id} | history_len={len(request.history)}")
+async def chat(request: ChatRequest, db: Session = Depends(get_db)):
+    """POST /ai/chat — SSE streaming response."""
+    logger.info(f"Incoming chat | conv={request.conversation_id} | hist={len(request.history)}")
 
-    try:
-        response = await ai_service.process_chat(request)
-        return response
+    async def event_stream():
+        import uuid
+        import time
 
-    except ValueError as e:
-        # Lỗi validation / parse
-        logger.warning(f"Validation error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        conversation_id = request.conversation_id or str(uuid.uuid4())
+        request_id = str(uuid.uuid4())
 
-    except RuntimeError as e:
-        error_str = str(e)
+        try:
+            dataset_metadata = dataset_service.get_metadata(request.dataset_id or "default")
 
-        # Rate limit / quota
-        if "RATE_LIMIT" in error_str:
-            logger.error("Gemini rate limit exceeded")
-            raise HTTPException(
-                status_code=503,
-                detail="AI service temporarily unavailable. Please try again later.",
+            # Build prompt và load history từ DB
+            from app.services.ai_service import _load_history_from_db, _save_messages
+            if request.conversation_id:
+                db_history = _load_history_from_db(request.conversation_id, db)
+                system_prompt, _ = _prompt_builder.build(
+                    message=request.message, dataset_metadata=dataset_metadata, history=[]
+                )
+                gemini_history = db_history if db_history else None
+                if gemini_history is None:
+                    system_prompt, gemini_history = _prompt_builder.build(
+                        message=request.message, dataset_metadata=dataset_metadata, history=request.history
+                    )
+            else:
+                system_prompt, gemini_history = _prompt_builder.build(
+                    message=request.message, dataset_metadata=dataset_metadata, history=request.history
+                )
+
+            # Kiểm tra giới hạn lịch sử để tránh vượt quá context window
+            from app.config import get_settings
+            settings = get_settings()
+            if len(gemini_history) >= settings.gemini_max_history_turns * 2:
+                error_msg = f"Cuộc hội thoại này đã quá dài (vượt quá {settings.gemini_max_history_turns} lượt). Vui lòng tạo cuộc hội thoại mới để tiếp tục."
+                yield f"data: {json.dumps({'type': 'error', 'code': 400, 'message': error_msg})}\n\n"
+                return
+
+            # Streaming: yield từng chunk
+            full_text = ""
+            for chunk in llm_service.generate_stream(
+                system_prompt=system_prompt,
+                history=gemini_history,
+                user_message=request.message,
+            ):
+                if chunk.startswith("[ERROR]"):
+                    yield f"data: {json.dumps({'type': 'error', 'message': chunk})}\n\n"
+                    return
+                full_text += chunk
+                yield f"data: {json.dumps({'type': 'chunk', 'text': chunk})}\n\n"
+
+            # Parse full response
+            from app.utils.security import validate_code
+            chat_response = _response_parser.parse(
+                raw_text=full_text,
+                conversation_id=conversation_id,
+                request_id=request_id,
             )
 
-        # Auth error
-        if "AUTH_ERROR" in error_str:
-            logger.error("Gemini authentication failed")
-            raise HTTPException(
-                status_code=500,
-                detail="AI service configuration error.",
-            )
+            if chat_response.code:
+                warnings = validate_code(chat_response.code)
+                chat_response.warnings.extend(warnings)
 
-        # Generic LLM error
-        logger.error(f"LLM error: {error_str}")
-        raise HTTPException(
-            status_code=500,
-            detail="AI service encountered an error. Please try again.",
-        )
+            # Lưu vào DB
+            _save_messages(db, conversation_id, request.message, chat_response)
 
-    except Exception as e:
-        logger.error(f"Unexpected error in /ai/chat: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Internal server error.")
+            # Gửi final event với toàn bộ response
+            yield f"data: {json.dumps({'type': 'done', 'response': chat_response.model_dump()})}\n\n"
+            yield "data: [DONE]\n\n"
+
+        except RuntimeError as e:
+            err = str(e)
+            if "RATE_LIMIT" in err:
+                yield f"data: {json.dumps({'type': 'error', 'code': 503, 'message': 'AI service tạm thời không khả dụng. Vui lòng thử lại sau.'})}\n\n"
+            else:
+                logger.error(f"LLM error in SSE stream: {e}")
+                yield f"data: {json.dumps({'type': 'error', 'code': 500, 'message': 'Lỗi AI service. Vui lòng thử lại.'})}\n\n"
+        except Exception as e:
+            logger.error(f"Unexpected error in /ai/chat SSE: {e}", exc_info=True)
+            yield f"data: {json.dumps({'type': 'error', 'code': 500, 'message': 'Lỗi hệ thống.'})}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
 
 
-@router.get(
-    "/health",
-    summary="AI Health Check",
-    description="Kiểm tra AI service có hoạt động không.",
-)
+@router.get("/health", summary="AI Health Check")
 async def health():
-    """GET /ai/health — health check cho AI module."""
     return {"status": "ok", "service": "ai"}

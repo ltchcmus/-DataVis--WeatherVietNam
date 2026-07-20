@@ -21,6 +21,14 @@ build/
 .idea/
 *.swp
 
+# Logs
+logs/
+*.gz
+
+# Runner output
+runner/*.txt
+runner/code.txt
+
 # OS
 .DS_Store
 Thumbs.db
@@ -32,3 +40,4 @@ dist/
 cong
 
 .env
+
