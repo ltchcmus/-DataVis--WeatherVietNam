@@ -1,0 +1,138 @@
+/* frontend/src/styles/dashboard.css */
+:root {
+  /* Light Theme Colors */
+  --bg-main: #F8FAFC;         /* Nền tổng thể: Slate 50 */
+  --bg-panel: #FFFFFF;        /* Nền các khối/container: Trắng */
+  --text-primary: #334155;    /* Chữ chính: Slate 700 */
+  --text-secondary: #64748B;  /* Chữ phụ: Slate 500 */
+  --border-color: #E2E8F0;    /* Viền: Slate 200 */
+  
+  /* Semantic Colors */
+  --accent-color: #4F46E5;    /* Nút chính, highlight: Indigo 600 */
+  --accent-hover: #4338CA;    /* Hover nút chính: Indigo 700 */
+  --success-color: #10B981;   /* Emerald 500 */
+  --danger-color: #EF4444;    /* Red 500 */
+  --danger-hover: #DC2626;    /* Red 600 */
+  
+  /* Weather & AQI Semantic Colors */
+  --temp-cold: #3B82F6;
+  --temp-mean: #F59E0B;
+  --temp-hot: #EF4444;
+  --rain: #0EA5E9;
+  --wind: #8B5CF6;
+  --humidity: #10B981;
+
+  --aqi-good: #00E400;
+  --aqi-moderate: #FFFF00;
+  --aqi-unhealthy-sensitive: #FF7E00;
+  --aqi-unhealthy: #FF0000;
+  --aqi-very-unhealthy: #8F3F97;
+  --aqi-hazardous: #7E0023;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Inter', -apple-system, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+}
+
+.split-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.dashboard-panel {
+  flex: 7; /* 70% */
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  background-color: var(--bg-main);
+  overflow-y: auto;
+}
+
+.ai-assistant-panel {
+  flex: 3; /* 30% */
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-panel);
+  position: relative;
+  height: 100vh;
+}
+
+.dashboard-header {
+  padding: 1.5rem 2rem;
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dashboard-content {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.5rem;
+}
+
+.kpi-card {
+  grid-column: span 3;
+  background: var(--bg-panel);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+}
+.kpi-card h3 { margin: 0; color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase; }
+.kpi-card p { margin: 0.5rem 0 0 0; font-size: 2rem; font-weight: 700; color: var(--accent-color); }
+
+.trend-chart {
+  grid-column: span 12;
+  background: var(--bg-panel);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid var(--border-color);
+  min-height: 350px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.half-chart {
+  grid-column: span 6;
+  background: var(--bg-panel);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid var(--border-color);
+  min-height: 300px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-secondary);
+}

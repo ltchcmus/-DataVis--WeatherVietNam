@@ -58,13 +58,19 @@ const CodeBlock = ({ initialCode, conversationId, requestId }) => {
         </pre>
       )}
 
-      <div style={{ padding: '8px 12px', backgroundColor: '#1e1e1e', borderTop: '1px solid #333', display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ padding: '12px 16px', backgroundColor: 'var(--bg-panel)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '12px', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+        <button 
+          onClick={() => { /* Xử lý loại bỏ code */ setCode(''); setIsEditing(false); }} 
+          style={{ background: 'transparent', color: 'var(--danger-color)', border: '1px solid var(--danger-color)', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500' }}
+        >
+          Loại bỏ
+        </button>
         <button 
           onClick={handleExecute} 
           disabled={isExecuting}
-          style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: isExecuting ? 'not-allowed' : 'pointer', fontSize: '0.9rem', fontWeight: 'bold' }}
+          style={{ background: 'var(--success-color)', color: 'white', border: 'none', padding: '6px 16px', borderRadius: '4px', cursor: isExecuting ? 'not-allowed' : 'pointer', fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}
         >
-          {isExecuting ? 'Running...' : 'Approve & Run'}
+          {isExecuting ? 'Đang chạy...' : 'Chấp nhận & Thực thi'}
         </button>
       </div>
 
