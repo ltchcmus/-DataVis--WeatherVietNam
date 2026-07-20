@@ -41,3 +41,8 @@ cong
 
 .env
 
+code.txt
+!package.json
+!dataset.csv
+!VietNam.csv
+!cities_1500.csv
