@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Copy, Check, Play, X, Edit2 } from 'lucide-react';
 import { aiService } from '../../../services/api';
 
 const CodeBlock = ({ initialCode, conversationId, requestId }) => {
@@ -33,69 +36,80 @@ const CodeBlock = ({ initialCode, conversationId, requestId }) => {
   };
 
   return (
-    <div className="code-block" style={{ marginBottom: '1rem', border: '1px solid #333', borderRadius: '8px', overflow: 'hidden' }}>
-      <div className="code-header" style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#1e1e1e', borderBottom: '1px solid #333' }}>
-        <span style={{ color: '#aaa', fontSize: '0.85rem' }}>python</span>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => setIsEditing(!isEditing)} style={{ background: 'transparent', border: '1px solid #555', color: '#ccc', borderRadius: '4px', padding: '2px 8px', fontSize: '0.8rem', cursor: 'pointer' }}>
-            {isEditing ? 'View' : 'Edit'}
+    <div className="code-block-premium">
+      <div className="code-block-header">
+        <span>python</span>
+        <div className="code-block-actions">
+          <button onClick={() => setIsEditing(!isEditing)} title="Edit Code">
+            <Edit2 size={14} /> {isEditing ? 'View' : 'Edit'}
           </button>
-          <button onClick={handleCopy} style={{ background: 'transparent', border: 'none', color: '#ccc', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}>
-            {copied ? 'Copied!' : 'Copy'}
+          <button onClick={handleCopy} title="Copy Code">
+            {copied ? <Check size={14} color="#10B981" /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy'}
           </button>
         </div>
       </div>
       
-      {isEditing ? (
-        <textarea
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          style={{ width: '100%', minHeight: '200px', background: '#0d0d0d', color: '#d4d4d4', padding: '12px', border: 'none', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.9rem', outline: 'none' }}
-        />
-      ) : (
-        <pre className="code-content" style={{ margin: 0, padding: '12px', overflowX: 'auto', background: '#0d0d0d' }}>
-          <code style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: '#d4d4d4' }}>{code}</code>
-        </pre>
-      )}
+      <div className="code-block-content-wrapper" style={{ margin: 0 }}>
+        {isEditing ? (
+          <textarea
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            style={{ 
+              width: '100%', minHeight: '250px', background: '#0F172A', color: '#E2E8F0', 
+              padding: '1rem', border: 'none', resize: 'vertical', 
+              fontFamily: "'Consolas', monospace", fontSize: '0.9rem', outline: 'none' 
+            }}
+          />
+        ) : (
+          <SyntaxHighlighter
+            language="python"
+            style={vscDarkPlus}
+            customStyle={{ margin: 0, padding: '1rem', background: '#0F172A', fontSize: '0.9rem' }}
+          >
+            {code}
+          </SyntaxHighlighter>
+        )}
+      </div>
 
-      <div style={{ padding: '12px 16px', backgroundColor: 'var(--bg-panel)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '12px', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+      <div className="code-block-footer">
         <button 
-          onClick={() => { /* Xử lý loại bỏ code */ setCode(''); setIsEditing(false); }} 
-          style={{ background: 'transparent', color: 'var(--danger-color)', border: '1px solid var(--danger-color)', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '500' }}
+          className="btn-reject"
+          onClick={() => { setCode(''); setIsEditing(false); }} 
         >
-          Loại bỏ
+          <X size={16} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '4px' }}/> Loại bỏ
         </button>
         <button 
+          className="btn-approve"
           onClick={handleExecute} 
           disabled={isExecuting}
-          style={{ background: 'var(--success-color)', color: 'white', border: 'none', padding: '6px 16px', borderRadius: '4px', cursor: isExecuting ? 'not-allowed' : 'pointer', fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}
         >
+          <Play size={16} fill="currentColor" />
           {isExecuting ? 'Đang chạy...' : 'Chấp nhận & Thực thi'}
         </button>
       </div>
 
       {execResult && (
-        <div style={{ padding: '12px', backgroundColor: '#000', borderTop: '1px solid #333' }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#aaa', fontSize: '0.85rem' }}>Kết quả:</h4>
+        <div style={{ padding: '1rem', backgroundColor: '#FFFFFF', borderTop: '1px solid var(--ai-border-color)' }}>
+          <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--ai-text-secondary)', fontSize: '0.85rem' }}>Kết quả thực thi:</h4>
           
           {execResult.status === 'approved' && execResult.output_type === 'manual' && (
-            <div style={{ color: '#10b981', whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>
+            <div style={{ color: '#10b981', whiteSpace: 'pre-wrap', fontSize: '0.9rem', fontWeight: '500' }}>
               {execResult.logs?.join('\n') || "✅ Đã phê duyệt code thành công."}
             </div>
           )}
 
           {execResult.status === 'success' && execResult.output_type === 'chart' && execResult.chart_base64 && (
-            <img src={`data:image/png;base64,${execResult.chart_base64}`} alt="Chart result" style={{ maxWidth: '100%', height: 'auto', borderRadius: '4px' }} />
+            <img src={`data:image/png;base64,${execResult.chart_base64}`} alt="Chart result" style={{ maxWidth: '100%', height: 'auto', borderRadius: '0.5rem', border: '1px solid var(--ai-border-color)', marginTop: '0.5rem' }} />
           )}
 
           {execResult.status === 'success' && execResult.output_type === 'text' && (
-             <pre style={{ margin: 0, color: '#e5e7eb', whiteSpace: 'pre-wrap', fontSize: '0.85rem' }}>
+             <pre style={{ margin: 0, color: 'var(--ai-text-primary)', whiteSpace: 'pre-wrap', fontSize: '0.85rem', background: '#F8FAFC', padding: '0.75rem', borderRadius: '0.375rem' }}>
                {execResult.logs?.join('\n') || "Thành công (không có output)"}
              </pre>
           )}
 
           {execResult.status === 'error' && (
-             <pre style={{ margin: 0, color: '#ef4444', whiteSpace: 'pre-wrap', fontSize: '0.85rem' }}>
+             <pre style={{ margin: 0, color: '#EF4444', whiteSpace: 'pre-wrap', fontSize: '0.85rem', background: '#FEF2F2', padding: '0.75rem', borderRadius: '0.375rem' }}>
                {execResult.error || "Lỗi không xác định"}
              </pre>
           )}

@@ -47,13 +47,26 @@ body, html {
 }
 
 .dashboard-panel {
-  flex: 7; /* 70% */
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border-color);
   background-color: var(--bg-main);
   overflow-y: auto;
+  height: 100%;
 }
+
+.resize-handle {
+  width: 8px;
+  background-color: var(--border-color);
+  cursor: col-resize;
+  transition: background-color 0.2s;
+  position: relative;
+  z-index: 10;
+}
+
+.resize-handle:hover, .resize-handle:active {
+  background-color: var(--accent-color);
+}
+
 
 .ai-assistant-panel {
   flex: 3; /* 30% */

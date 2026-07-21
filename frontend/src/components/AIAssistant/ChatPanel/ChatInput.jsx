@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Send } from 'lucide-react';
 
 const ChatInput = ({ onSend, disabled }) => {
   const [text, setText] = useState('');
@@ -15,6 +16,10 @@ const ChatInput = ({ onSend, disabled }) => {
     if (text.trim() && !disabled) {
       onSend(text);
       setText('');
+      // Reset height
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
     }
   };
 
@@ -30,7 +35,7 @@ const ChatInput = ({ onSend, disabled }) => {
       <textarea
         ref={textareaRef}
         className="chat-input"
-        placeholder="Gửi tin nhắn đến AI Data Assistant..."
+        placeholder="Nhập yêu cầu để phân tích hoặc sinh mã..."
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -42,9 +47,7 @@ const ChatInput = ({ onSend, disabled }) => {
         onClick={handleSend} 
         disabled={disabled || !text.trim()}
       >
-        <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 24 24" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
-        </svg>
+        <Send size={18} />
       </button>
     </div>
   );

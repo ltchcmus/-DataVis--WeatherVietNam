@@ -24,6 +24,7 @@ GENERATION_CONFIG = GenerationConfig(
     top_p=0.8,
     top_k=40,
     max_output_tokens=4096,
+    response_mime_type="application/json",
 )
 
 SAFETY_SETTINGS = [

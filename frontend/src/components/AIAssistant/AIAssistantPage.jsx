@@ -4,7 +4,7 @@ import ChatPanel from './ChatPanel/ChatPanel';
 import { aiService } from '../../services/api';
 import { useChat } from '../../hooks/useChat';
 
-const AIAssistantPage = () => {
+const AIAssistantPage = ({ isFullScreen, onToggleFullScreen }) => {
   const [historyList, setHistoryList] = useState([]);
   const chat = useChat();
 
@@ -36,15 +36,19 @@ const AIAssistantPage = () => {
   };
 
   return (
-    <>
+    <div className="ai-assistant-container" style={{ display: 'flex', width: '100%', height: '100%' }}>
       <Sidebar 
         history={historyList} 
         currentId={chat.conversationId}
         onSelect={handleSelectConversation}
         onNewChat={handleNewChat}
       />
-      <ChatPanel chat={chat} />
-    </>
+      <ChatPanel 
+        chat={chat} 
+        isFullScreen={isFullScreen} 
+        onToggleFullScreen={onToggleFullScreen} 
+      />
+    </div>
   );
 };
 

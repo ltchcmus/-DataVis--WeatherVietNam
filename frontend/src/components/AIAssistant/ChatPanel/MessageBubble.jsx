@@ -1,15 +1,8 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import CodeBlock from './CodeBlock';
-
-// Hàm helper cực kỳ đơn giản để render markdown nhẹ nhàng
-const renderFormattedText = (text) => {
-  if (!text) return null;
-  // Thay thế bold
-  let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  // Thay thế newline
-  html = html.replace(/\n/g, '<br/>');
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;
-};
+import { User, Bot } from 'lucide-react';
 
 const MessageBubble = ({ message }) => {
   const isUser = message.role === 'user';
@@ -18,7 +11,7 @@ const MessageBubble = ({ message }) => {
     <div className={`message-wrapper ${isUser ? 'user' : 'assistant'}`}>
       <div className="message-container">
         <div className={`avatar ${isUser ? 'user' : 'assistant'}`}>
-          {isUser ? 'U' : 'AI'}
+          {isUser ? <User size={18} /> : <Bot size={18} />}
         </div>
         <div className="message-content">
           {message.isStreaming && !message.content ? (
@@ -29,16 +22,26 @@ const MessageBubble = ({ message }) => {
             </div>
           ) : (
             <>
-              {renderFormattedText(message.content)}
+              {message.content && (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {message.content}
+                </ReactMarkdown>
+              )}
               
               {message.code && (
-                <CodeBlock code={message.code} />
+                <CodeBlock 
+                  initialCode={message.code} 
+                  conversationId={message.conversation_id} 
+                  requestId={message.id} 
+                />
               )}
               
               {message.explanation && (
-                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '0.375rem' }}>
-                  <h4>Giải thích code:</h4>
-                  {renderFormattedText(message.explanation)}
+                <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#F8FAFC', borderRadius: '0.5rem', borderLeft: '4px solid var(--ai-accent-color)' }}>
+                  <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--ai-text-secondary)', fontSize: '0.875rem' }}>Giải thích logic:</h4>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.explanation}
+                  </ReactMarkdown>
                 </div>
               )}
             </>
