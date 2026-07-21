@@ -44,6 +44,17 @@ const MessageBubble = ({ message }) => {
                   </ReactMarkdown>
                 </div>
               )}
+              
+              {message.suggestions && message.suggestions.length > 0 && (
+                <div className="suggestions-list" style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <h4 style={{ margin: '0 0 0.25rem 0', color: 'var(--ai-text-secondary)', fontSize: '0.875rem' }}>💡 Gợi ý phân tích cho bạn:</h4>
+                  {message.suggestions.map((suggestion, idx) => (
+                    <div key={idx} style={{ padding: '0.5rem 0.75rem', backgroundColor: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: '0.5rem', fontSize: '0.875rem', color: '#334155', lineHeight: '1.4' }}>
+                      {suggestion}
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </div>
