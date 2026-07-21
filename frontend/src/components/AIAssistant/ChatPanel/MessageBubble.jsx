@@ -10,9 +10,11 @@ const MessageBubble = ({ message }) => {
   return (
     <div className={`message-wrapper ${isUser ? 'user' : 'assistant'}`}>
       <div className="message-container">
-        <div className={`avatar ${isUser ? 'user' : 'assistant'}`}>
-          {isUser ? <User size={18} /> : <Bot size={18} />}
-        </div>
+        {!isUser && (
+          <div className="avatar assistant">
+            <Bot size={18} />
+          </div>
+        )}
         <div className="message-content">
           {message.isStreaming && !message.content ? (
             <div className="typing-indicator">
