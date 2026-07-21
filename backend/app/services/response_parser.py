@@ -43,7 +43,7 @@ class ResponseParser:
         json_str = self._extract_json(raw_text)
 
         try:
-            data = json.loads(json_str)
+            data = json.loads(json_str, strict=False)
         except json.JSONDecodeError as e:
             logger.warning(f"JSON parse failed, wrapping as plain answer | error={e}")
             data = {

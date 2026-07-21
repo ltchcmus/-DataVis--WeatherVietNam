@@ -71,7 +71,19 @@ export const useChat = () => {
                 return;
               } else if (data.type === 'chunk') {
                 assistantContent += data.text;
-                setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, content: assistantContent } : m));
+                
+                let displayContent = assistantContent;
+                if (assistantContent.trim().startsWith('{')) {
+                  // Trích xuất nội dung của trường "message" bằng regex
+                  const msgMatch = assistantContent.match(/"message"\s*:\s*"([^]*?)(?:",\s*"[a-zA-Z_]+"\s*:|$)/);
+                  if (msgMatch) {
+                    displayContent = msgMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+                  } else {
+                    displayContent = ''; // Chưa stream tới trường message thì ẩn đi
+                  }
+                }
+                
+                setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, content: displayContent } : m));
               } else if (data.type === 'done') {
                 // Final parsed response
                 setMessages(prev => prev.map(m => m.id === assistantMsgId ? { 
