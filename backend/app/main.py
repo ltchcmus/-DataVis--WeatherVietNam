@@ -157,4 +157,7 @@ async def root():
 
 @app.get("/health", tags=["Root"])
 async def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "enable_auto_execute": settings.enable_auto_execute
+    }
