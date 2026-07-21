@@ -81,6 +81,8 @@ export const useChat = () => {
                   explanation: data.response.explanation,
                   suggestions: data.response.suggestions,
                   action: data.response.action,
+                  conversation_id: data.response.conversation_id,
+                  request_id: data.response.request_id,
                   isStreaming: false
                 } : m));
                 
@@ -112,7 +114,9 @@ export const useChat = () => {
       code: m.code,
       explanation: m.explanation,
       suggestions: m.suggestions,
-      action: m.action
+      action: m.action,
+      conversation_id: id,
+      request_id: m.request_id
     })));
     setError(null);
   }, []);

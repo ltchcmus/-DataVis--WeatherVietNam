@@ -32,7 +32,7 @@ const MessageBubble = ({ message }) => {
                 <CodeBlock 
                   initialCode={message.code} 
                   conversationId={message.conversation_id} 
-                  requestId={message.id} 
+                  requestId={message.request_id || message.id} 
                 />
               )}
               

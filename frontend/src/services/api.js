@@ -9,6 +9,11 @@ const api = axios.create({
 });
 
 export const aiService = {
+  getConfig: async () => {
+    const res = await api.get('/health');
+    return res.data;
+  },
+
   getSuggestions: async () => {
     const res = await api.get('/suggestions');
     return res.data;

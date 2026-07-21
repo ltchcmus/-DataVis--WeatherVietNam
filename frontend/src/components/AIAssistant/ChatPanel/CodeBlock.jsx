@@ -10,6 +10,15 @@ const CodeBlock = ({ initialCode, conversationId, requestId }) => {
   const [code, setCode] = useState(initialCode || '');
   const [isExecuting, setIsExecuting] = useState(false);
   const [execResult, setExecResult] = useState(null);
+  const [enableAutoExecute, setEnableAutoExecute] = useState(true);
+
+  React.useEffect(() => {
+    aiService.getConfig().then(data => {
+      if (data && data.enable_auto_execute === false) {
+        setEnableAutoExecute(false);
+      }
+    }).catch(e => console.error(e));
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
@@ -82,11 +91,18 @@ const CodeBlock = ({ initialCode, conversationId, requestId }) => {
           className="btn-approve"
           onClick={handleExecute} 
           disabled={isExecuting}
+          style={!enableAutoExecute ? { backgroundColor: '#F59E0B', color: 'white' } : {}}
         >
-          <Play size={16} fill="currentColor" />
-          {isExecuting ? 'Đang chạy...' : 'Chấp nhận & Thực thi'}
+          {enableAutoExecute ? <Play size={16} fill="currentColor" /> : <Check size={16} />}
+          {isExecuting ? 'Đang xử lý...' : (enableAutoExecute ? 'Chấp nhận & Thực thi' : 'Phê duyệt Code (Manual)')}
         </button>
       </div>
+
+      {!enableAutoExecute && !execResult && (
+        <div style={{ padding: '0.75rem 1rem', backgroundColor: '#FEF3C7', borderTop: '1px solid #FDE68A', color: '#92400E', fontSize: '0.85rem' }}>
+          <strong>Lưu ý:</strong> Tính năng tự động chạy code đang TẮT. Vui lòng bấm <strong>Phê duyệt Code</strong>, sau đó copy nội dung bên trên vào <code>runner/code.txt</code> và chạy lệnh <code>python runner/runner.py</code> trên máy của bạn.
+        </div>
+      )}
 
       {execResult && (
         <div style={{ padding: '1rem', backgroundColor: '#FFFFFF', borderTop: '1px solid var(--ai-border-color)' }}>
