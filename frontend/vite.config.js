@@ -1,20 +1,33 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const proxyOptions = {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  configure: (proxy) => {
+    proxy.on('error', (err, req, res) => {
+      if (res && !res.headersSent) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Backend server is offline' }));
+      }
+    });
+  }
+};
+
 export default defineConfig({
   plugins: [react()],
   root: '.',
   server: {
     port: 3000,
     proxy: {
-      '/ai': 'http://localhost:8000',
-      '/execute': 'http://localhost:8000',
-      '/history': 'http://localhost:8000',
-      '/conversations': 'http://localhost:8000',
-      '/suggestions': 'http://localhost:8000',
-      '/logs': 'http://localhost:8000',
-      '/data': 'http://localhost:8000',
-      '/health': 'http://localhost:8000',
+      '/ai': proxyOptions,
+      '/execute': proxyOptions,
+      '/history': proxyOptions,
+      '/conversations': proxyOptions,
+      '/suggestions': proxyOptions,
+      '/logs': proxyOptions,
+      '^/data(/|$)': proxyOptions,
+      '/health': proxyOptions,
     }
   }
 })
