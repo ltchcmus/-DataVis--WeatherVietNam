@@ -3,10 +3,12 @@ import {
   Thermometer,
   Map as MapIcon,
   GitCompare,
+  Network,
 } from 'lucide-react';
 import OverviewTab from './OverviewTab';
 import TimeTrendTab from './TimeTrendTab';
 import ProvinceComparisonTab from './ProvinceComparisonTab';
+import RelationshipAnalysisTab from './RelationshipAnalysisTab';
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -15,6 +17,7 @@ const DashboardLayout = () => {
     { id: 'overview', label: 'Tổng quan', icon: <MapIcon size={18} /> },
     { id: 'climate', label: 'Biến động theo thời gian', icon: <Thermometer size={18} /> },
     { id: 'compare', label: 'So sánh tỉnh', icon: <GitCompare size={18} /> },
+    { id: 'relationship', label: 'Mối quan hệ', icon: <Network size={18} /> },
   ];
 
   return (
@@ -46,6 +49,8 @@ const DashboardLayout = () => {
         {activeTab === 'climate' && <TimeTrendTab />}
 
         {activeTab === 'compare' && <ProvinceComparisonTab />}
+
+        {activeTab === 'relationship' && <RelationshipAnalysisTab />}
       </div>
     </div>
   );
