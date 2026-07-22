@@ -30,7 +30,7 @@ export default function useWeatherData() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('/weather_dataset.csv')
+    fetch('/dataset.csv')
       .then(res => {
         if (!res.ok) throw new Error('Failed to load dataset');
         return res.text();

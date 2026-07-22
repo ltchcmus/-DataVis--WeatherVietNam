@@ -23,12 +23,12 @@ function App() {
         {!isFullScreenChat && (
           <Separator id="resize-handle" className="resize-handle" />
         )}
-        
+
         <Panel id="chat-panel" order={2} defaultSize={isFullScreenChat ? 100 : 30} minSize={20}>
           <div className="ai-assistant-panel" style={{ width: '100%', height: '100%' }}>
-            <AIAssistantPage 
-              isFullScreen={isFullScreenChat} 
-              onToggleFullScreen={toggleFullScreen} 
+            <AIAssistantPage
+              isFullScreen={isFullScreenChat}
+              onToggleFullScreen={toggleFullScreen}
             />
           </div>
         </Panel>
