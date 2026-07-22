@@ -6,8 +6,16 @@ const ChatInput = ({ onSend, disabled }) => {
   const [text, setText] = useState('');
   const [images, setImages] = useState([]);
   const [maxImages, setMaxImages] = useState(4);
+  const [toastMessage, setToastMessage] = useState(null);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
 
   useEffect(() => {
     aiService.getConfig().then(data => {
@@ -29,7 +37,7 @@ const ChatInput = ({ onSend, disabled }) => {
     if (!files.length) return;
 
     if (images.length + files.length > maxImages) {
-      alert(`Bạn chỉ có thể tải lên tối đa ${maxImages} ảnh.`);
+      setToastMessage(`Bạn chỉ có thể tải lên tối đa ${maxImages} ảnh.`);
       return;
     }
 
@@ -78,7 +86,7 @@ const ChatInput = ({ onSend, disabled }) => {
     if (!files.length) return;
 
     if (images.length + files.length > maxImages) {
-      alert(`Bạn chỉ có thể tải lên tối đa ${maxImages} ảnh.`);
+      setToastMessage(`Bạn chỉ có thể tải lên tối đa ${maxImages} ảnh.`);
       return;
     }
 
@@ -101,6 +109,26 @@ const ChatInput = ({ onSend, disabled }) => {
 
   return (
     <div className="chat-input-wrapper" style={{ position: 'relative', width: '100%', margin: '0 auto', maxWidth: '800px', display: 'flex', flexDirection: 'column' }}>
+      {toastMessage && (
+        <div style={{
+          position: 'absolute',
+          top: '-48px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#ef4444',
+          color: 'white',
+          padding: '8px 16px',
+          borderRadius: '24px',
+          fontSize: '14px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          zIndex: 10,
+          whiteSpace: 'nowrap',
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          {toastMessage}
+        </div>
+      )}
+      
       {images.length > 0 && (
         <div className="image-previews" style={{ display: 'flex', gap: '8px', padding: '8px', overflowX: 'auto' }}>
           {images.map((img, idx) => (
