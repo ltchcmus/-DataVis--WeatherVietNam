@@ -159,5 +159,6 @@ async def root():
 async def health():
     return {
         "status": "ok",
-        "enable_auto_execute": settings.enable_auto_execute
+        "enable_auto_execute": settings.enable_auto_execute,
+        "max_image_uploads": settings.max_image_uploads
     }

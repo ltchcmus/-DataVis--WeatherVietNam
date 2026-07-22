@@ -24,6 +24,13 @@ const MessageBubble = ({ message }) => {
             </div>
           ) : (
             <>
+              {message.images && message.images.length > 0 && (
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                  {message.images.map((img, idx) => (
+                    <img key={idx} src={img} alt={`User uploaded ${idx}`} style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', border: '1px solid var(--border-color)', objectFit: 'contain' }} />
+                  ))}
+                </div>
+              )}
               {message.content && (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.content}

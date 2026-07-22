@@ -7,10 +7,10 @@ export const useChat = () => {
   const [conversationId, setConversationId] = useState(null);
   const abortControllerRef = useRef(null);
 
-  const sendMessage = useCallback(async (text) => {
-    if (!text.trim()) return;
+  const sendMessage = useCallback(async (text, images = []) => {
+    if (!text.trim() && images.length === 0) return;
 
-    const userMessage = { role: 'user', content: text, id: Date.now().toString() };
+    const userMessage = { role: 'user', content: text, images, id: Date.now().toString() };
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
     setError(null);
@@ -30,7 +30,8 @@ export const useChat = () => {
         body: JSON.stringify({
           message: text,
           conversation_id: conversationId,
-          history: [] // We now rely on DB history if conversationId is provided
+          history: [], // We now rely on DB history if conversationId is provided
+          images: images
         }),
         signal: abortControllerRef.current.signal
       });

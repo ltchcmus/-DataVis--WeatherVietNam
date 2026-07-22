@@ -108,6 +108,7 @@ QUY TẮC BẮT BUỘC KHI SINH CODE:
 11. NẾU YÊU CẦU LÀ TẠO CODE (bất kể là phân tích dữ liệu hay code cơ bản như "Hello World"): BẮT BUỘC đặt action là "generate_code" và điền mã nguồn vào field `code`. TUYỆT ĐỐI KHÔNG để markdown code block (```python ...) bên trong field "message".
 12. CHỐNG ẢO GIÁC (HALLUCINATION): NẾU KHÔNG CÓ DỮ LIỆU hoặc dữ liệu bị thiếu/không đủ để phân tích, PHẢI thông báo rõ ràng cho người dùng trong field "message" thay vì tự bịa ra số liệu.
 13. TRONG PHẦN CODE TRẢ VỀ: BẮT BUỘC phải chèn các lệnh `print()` để in ra terminal trạng thái và tiến trình xử lý (Ví dụ: `print("Đang đọc dữ liệu...")`, `print("Đang xử lý biểu đồ...")`) để người dùng biết chương trình đang ở bước nào.
+14. PHÂN TÍCH ẢNH (NẾU CÓ): Khi người dùng gửi ảnh (biểu đồ, bản đồ, v.v.), hãy quan sát KỸ các con số, nhãn dán, chú giải hiển thị trực tiếp trên ảnh. CHỈ phân tích dựa trên thông tin CÓ THẬT trong ảnh, tuyệt đối KHÔNG ĐOÁN MÒ (ảo giác). Nếu ảnh mờ hoặc không có dữ liệu để đọc, hãy phản hồi: "Tôi không thể đọc được dữ liệu rõ ràng từ bức ảnh này."
 
 ═══════════════════════════════════════════════════
 PHÂN LOẠI YÊU CẦU — chọn đúng action (5 loại):
