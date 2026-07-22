@@ -1246,4 +1246,212 @@ body, html {
   .filter-row { flex-direction: column; align-items: stretch; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════ */
+/*  TAB 3 — So sánh giữa các tỉnh                                    */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+.province-comparison-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tab-intro-panel {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.85rem;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.tab-intro-panel h2 {
+  margin: 0.1rem 0 0.35rem;
+  font-size: 1.2rem;
+  color: #0F172A;
+}
+
+.tab-intro-panel p {
+  margin: 0;
+  color: #64748B;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.tab-kicker {
+  font-size: 0.75rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #2563EB !important;
+  font-weight: 700;
+}
+
+.compare-stat-row .stat-tile-value {
+  font-size: 1.2rem;
+  letter-spacing: 0;
+}
+
+.compare-hot {
+  background: rgba(235, 104, 52, 0.12);
+  color: #d95926;
+}
+
+.compare-rain {
+  background: rgba(42, 120, 214, 0.12);
+  color: #2a78d6;
+}
+
+.compare-clean {
+  background: rgba(27, 175, 122, 0.12);
+  color: #1baf7a;
+}
+
+.compare-wind {
+  background: rgba(74, 58, 167, 0.12);
+  color: #4a3aa7;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.comparison-card-wide {
+  grid-row: span 2;
+}
+
+.chart-card-header {
+  min-height: 34px;
+}
+
+.boxplot-scroll {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.boxplot-svg {
+  width: 100%;
+  min-width: 780px;
+  display: block;
+}
+
+.boxplot-label {
+  fill: #334155;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.boxplot-axis-text {
+  fill: #64748B;
+  font-size: 11px;
+}
+
+.heatmap-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 520px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.heatmap-row {
+  display: grid;
+  grid-template-columns: minmax(108px, 1.4fr) repeat(5, minmax(54px, 0.7fr));
+  gap: 4px;
+  align-items: stretch;
+  min-width: 580px;
+}
+
+.heatmap-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #ffffff;
+}
+
+.heatmap-head > div {
+  color: #64748B;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.45rem;
+}
+
+.heatmap-province {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  color: #1E293B;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.45rem;
+  background: #F8FAFC;
+  border-radius: 0.35rem;
+}
+
+.heatmap-cell {
+  min-height: 28px;
+  border-radius: 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.heatmap-cell:focus,
+.boxplot-svg g:focus {
+  outline: 2px solid #2a78d6;
+  outline-offset: 2px;
+}
+
+.comparison-chart-frame {
+  width: 100%;
+  height: 340px;
+}
+
+.province-tooltip .viz-tooltip-value {
+  margin-left: auto;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.comparison-ranking {
+  gap: 1rem;
+}
+
+.top10-chart-frame {
+  width: 100%;
+  height: 420px;
+}
+
+.top10-bar-label {
+  fill: #0F172A;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-card-wide {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .heatmap-table {
+    overflow-x: auto;
+  }
+
+  .heatmap-row { min-width: 560px; }
+}
+
 

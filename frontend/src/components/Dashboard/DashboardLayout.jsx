@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import {
-  CorrelationChart,
-  PlaceholderChart,
-} from './PlaceholderCharts';
-import {
-  Cloud,
   Thermometer,
-  BarChart2,
   Map as MapIcon,
+  GitCompare,
 } from 'lucide-react';
 import OverviewTab from './OverviewTab';
 import TimeTrendTab from './TimeTrendTab';
+import ProvinceComparisonTab from './ProvinceComparisonTab';
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -18,7 +14,7 @@ const DashboardLayout = () => {
   const tabs = [
     { id: 'overview', label: 'Tổng quan', icon: <MapIcon size={18} /> },
     { id: 'climate', label: 'Biến động theo thời gian', icon: <Thermometer size={18} /> },
-    { id: 'aqi', label: 'Chất lượng không khí', icon: <Cloud size={18} /> },
+    { id: 'compare', label: 'So sánh tỉnh', icon: <GitCompare size={18} /> },
   ];
 
   return (
@@ -49,13 +45,7 @@ const DashboardLayout = () => {
 
         {activeTab === 'climate' && <TimeTrendTab />}
 
-        {activeTab === 'aqi' && (
-          <div className="dashboard-grid">
-            <CorrelationChart />
-            <PlaceholderChart title="Mật độ phân bố AQI (Heatmap)" icon={<MapIcon size={48} />} />
-            <PlaceholderChart title="Biến động AQI theo khu vực (Bar Chart)" icon={<BarChart2 size={48} />} />
-          </div>
-        )}
+        {activeTab === 'compare' && <ProvinceComparisonTab />}
       </div>
     </div>
   );
