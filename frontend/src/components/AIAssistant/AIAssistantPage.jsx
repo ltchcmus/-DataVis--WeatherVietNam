@@ -37,12 +37,14 @@ const AIAssistantPage = ({ isFullScreen, onToggleFullScreen }) => {
 
   return (
     <div className="ai-assistant-container" style={{ display: 'flex', width: '100%', height: '100%' }}>
-      <Sidebar 
-        history={historyList} 
-        currentId={chat.conversationId}
-        onSelect={handleSelectConversation}
-        onNewChat={handleNewChat}
-      />
+      {isFullScreen && (
+        <Sidebar 
+          history={historyList} 
+          currentId={chat.conversationId}
+          onSelect={handleSelectConversation}
+          onNewChat={handleNewChat}
+        />
+      )}
       <ChatPanel 
         chat={chat} 
         isFullScreen={isFullScreen} 

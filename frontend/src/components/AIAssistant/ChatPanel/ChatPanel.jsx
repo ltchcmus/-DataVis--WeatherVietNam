@@ -25,11 +25,18 @@ const ChatPanel = ({ chat, isFullScreen, onToggleFullScreen }) => {
           AI Assistant
         </div>
         <button 
-          className="icon-button" 
+          className={isFullScreen ? "btn-back-dashboard" : "icon-button"} 
           onClick={onToggleFullScreen}
           title={isFullScreen ? "Thu nhỏ màn hình" : "Phóng to màn hình"}
         >
-          {isFullScreen ? <Minimize size={18} /> : <Maximize size={18} />}
+          {isFullScreen ? (
+            <>
+              <Minimize size={16} />
+              <span>Quay lại Dashboard</span>
+            </>
+          ) : (
+            <Maximize size={18} />
+          )}
         </button>
       </div>
 

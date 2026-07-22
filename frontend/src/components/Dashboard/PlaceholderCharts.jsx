@@ -28,11 +28,32 @@ const mapData = [
   { name: 'Đà Nẵng', lat: 16.0471, lng: 108.2062, temp: 28, aqi: 45 },
 ];
 
-export const KPICard = ({ title, value, subValue, colorClass }) => (
+export const KPICard = ({ title, value, subValue, colorClass, icon }) => (
   <div className="kpi-card" style={{ borderLeft: `4px solid var(${colorClass})` }}>
-    <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '8px' }}>{title}</h3>
-    <p style={{ color: 'var(--text-primary)', fontSize: '1.8rem', fontWeight: 'bold', margin: 0 }}>{value}</p>
-    {subValue && <span style={{ color: `var(${colorClass})`, fontSize: '0.85rem', fontWeight: '600', marginTop: '4px' }}>{subValue}</span>}
+    <div className="kpi-card-inner">
+      <div className="kpi-content">
+        <h3>{title}</h3>
+        <p>{value}</p>
+        {subValue && <span className="kpi-subvalue" style={{ color: `var(${colorClass})` }}>{subValue}</span>}
+      </div>
+      {icon && (
+        <div className="kpi-icon" style={{ color: `var(${colorClass})`, opacity: 0.8 }}>
+          {icon}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+export const PlaceholderChart = ({ title, icon }) => (
+  <div className="half-chart placeholder-chart">
+    <div className="placeholder-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', opacity: 0.6 }}>
+      <div className="placeholder-icon" style={{ color: 'var(--text-secondary)' }}>{icon}</div>
+      <h3 style={{ marginTop: '1rem', fontSize: '1.1rem', textAlign: 'center', color: 'var(--text-primary)' }}>{title}</h3>
+      <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '0.5rem', fontSize: '0.9rem', maxWidth: '80%' }}>
+        Khu vực dành cho biểu đồ dữ liệu.<br/>Team Data Viz sẽ cập nhật phần này sau.
+      </p>
+    </div>
   </div>
 );
 
