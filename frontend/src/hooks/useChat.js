@@ -127,6 +127,7 @@ export const useChat = () => {
       code: m.code,
       explanation: m.explanation,
       suggestions: m.suggestions,
+      images: m.images,
       action: m.action,
       conversation_id: id,
       request_id: m.request_id
