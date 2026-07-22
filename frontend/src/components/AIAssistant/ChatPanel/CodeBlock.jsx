@@ -120,7 +120,7 @@ const CodeBlock = ({ initialCode, conversationId, requestId }) => {
 
           {execResult.status === 'success' && execResult.output_type === 'text' && (
              <pre style={{ margin: 0, color: 'var(--ai-text-primary)', whiteSpace: 'pre-wrap', fontSize: '0.85rem', background: '#F8FAFC', padding: '0.75rem', borderRadius: '0.375rem' }}>
-               {execResult.logs?.join('\n') || "Thành công (không có output)"}
+               {execResult.logs?.join('\n') || "Thành công (không có output ở terminal)"}
              </pre>
           )}
 
