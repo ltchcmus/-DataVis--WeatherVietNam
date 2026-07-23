@@ -6,6 +6,12 @@ const NUMERIC_FIELDS = new Set([
   'rain_sum', 'humidity_mean', 'wind_speed_max', 'aqi', 'cloud_cover_mean',
 ]);
 
+function toNum(val, defaultVal = 0) {
+  if (val == null || val === '') return defaultVal;
+  const n = parseFloat(val);
+  return Number.isFinite(n) ? n : defaultVal;
+}
+
 function parseCSV(text) {
   const lines = text.trim().split('\n');
   const headers = lines[0].split(',').map(h => h.trim());
@@ -18,7 +24,7 @@ function parseCSV(text) {
       const row = {};
       headers.forEach((header, i) => {
         const raw = values[i]?.trim();
-        row[header] = NUMERIC_FIELDS.has(header) ? parseFloat(raw) : raw;
+        row[header] = NUMERIC_FIELDS.has(header) ? toNum(raw) : raw;
       });
       return row;
     });
@@ -31,16 +37,16 @@ function mapSupabaseRecord(rec) {
     city_id: String(rec.city_id),
     province: cityInfo.city || '',
     country: cityInfo.country || 'Viet Nam',
-    latitude: cityInfo.latitude != null ? parseFloat(cityInfo.latitude) : null,
-    longitude: cityInfo.longitude != null ? parseFloat(cityInfo.longitude) : null,
-    temperature_max: rec.temperature_2m_max != null ? parseFloat(rec.temperature_2m_max) : null,
-    temperature_min: rec.temperature_2m_min != null ? parseFloat(rec.temperature_2m_min) : null,
-    temperature_mean: rec.temperature_2m_mean != null ? parseFloat(rec.temperature_2m_mean) : null,
-    rain_sum: rec.rain_sum != null ? parseFloat(rec.rain_sum) : null,
-    humidity_mean: rec.relative_humidity_2m_mean != null ? parseFloat(rec.relative_humidity_2m_mean) : null,
-    wind_speed_max: rec.wind_speed_10m_max != null ? parseFloat(rec.wind_speed_10m_max) : null,
-    aqi: rec.aqi != null ? parseFloat(rec.aqi) : null,
-    cloud_cover_mean: rec.cloud_cover_mean != null ? parseFloat(rec.cloud_cover_mean) : null,
+    latitude: toNum(cityInfo.latitude),
+    longitude: toNum(cityInfo.longitude),
+    temperature_max: toNum(rec.temperature_2m_max ?? rec.temperature_max),
+    temperature_min: toNum(rec.temperature_2m_min ?? rec.temperature_min),
+    temperature_mean: toNum(rec.temperature_2m_mean ?? rec.temperature_mean),
+    rain_sum: toNum(rec.rain_sum),
+    humidity_mean: toNum(rec.relative_humidity_2m_mean ?? rec.humidity_mean),
+    wind_speed_max: toNum(rec.wind_speed_10m_max ?? rec.wind_speed_max),
+    aqi: toNum(rec.aqi),
+    cloud_cover_mean: toNum(rec.cloud_cover_mean),
   };
 }
 

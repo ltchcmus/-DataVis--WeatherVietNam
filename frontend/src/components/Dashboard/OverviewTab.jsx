@@ -97,9 +97,10 @@ function aggregateByProvince(rows) {
   const grouped = {};
   rows.forEach(r => {
     const k = r.province;
+    if (!k) return;
     if (!grouped[k]) {
       grouped[k] = {
-        province: k, latitude: r.latitude, longitude: r.longitude,
+        province: k, latitude: Number(r.latitude) || 0, longitude: Number(r.longitude) || 0,
         city_id: r.city_id,
         temperature_max: 0, temperature_min: 0, temperature_mean: 0,
         rain_sum: 0, humidity_mean: 0, wind_speed_max: 0,
@@ -107,27 +108,27 @@ function aggregateByProvince(rows) {
       };
     }
     const g = grouped[k];
-    g.temperature_max  += r.temperature_max;
-    g.temperature_min  += r.temperature_min;
-    g.temperature_mean += r.temperature_mean;
-    g.rain_sum         += r.rain_sum;
-    g.humidity_mean    += r.humidity_mean;
-    g.wind_speed_max   += r.wind_speed_max;
-    g.aqi              += r.aqi;
-    g.cloud_cover_mean += r.cloud_cover_mean;
+    g.temperature_max  += Number(r.temperature_max) || 0;
+    g.temperature_min  += Number(r.temperature_min) || 0;
+    g.temperature_mean += Number(r.temperature_mean) || 0;
+    g.rain_sum         += Number(r.rain_sum) || 0;
+    g.humidity_mean    += Number(r.humidity_mean) || 0;
+    g.wind_speed_max   += Number(r.wind_speed_max) || 0;
+    g.aqi              += Number(r.aqi) || 0;
+    g.cloud_cover_mean += Number(r.cloud_cover_mean) || 0;
     g.count++;
   });
 
   return Object.values(grouped).map(g => ({
     ...g,
-    temperature_max:  +(g.temperature_max  / g.count).toFixed(1),
-    temperature_min:  +(g.temperature_min  / g.count).toFixed(1),
-    temperature_mean: +(g.temperature_mean / g.count).toFixed(1),
-    rain_sum:         +(g.rain_sum         / g.count).toFixed(1),
-    humidity_mean:    Math.round(g.humidity_mean    / g.count),
-    wind_speed_max:   +(g.wind_speed_max   / g.count).toFixed(1),
-    aqi:              Math.round(g.aqi              / g.count),
-    cloud_cover_mean: Math.round(g.cloud_cover_mean / g.count),
+    temperature_max:  g.count ? +(g.temperature_max  / g.count).toFixed(1) : 0,
+    temperature_min:  g.count ? +(g.temperature_min  / g.count).toFixed(1) : 0,
+    temperature_mean: g.count ? +(g.temperature_mean / g.count).toFixed(1) : 0,
+    rain_sum:         g.count ? +(g.rain_sum         / g.count).toFixed(1) : 0,
+    humidity_mean:    g.count ? Math.round(g.humidity_mean    / g.count) : 0,
+    wind_speed_max:   g.count ? +(g.wind_speed_max   / g.count).toFixed(1) : 0,
+    aqi:              g.count ? Math.round(g.aqi              / g.count) : 0,
+    cloud_cover_mean: g.count ? Math.round(g.cloud_cover_mean / g.count) : 0,
   }));
 }
 
@@ -424,27 +425,26 @@ const OverviewTab = () => {
   }, [activePieIndex, pieDistribution, dominantTier]);
 
   /* ── Top Rankings based on rankingMetric ───────────────────────── */
+  const getRankingVal = (r, metric) => {
+    let v = 0;
+    if (metric === 'aqi') v = r.aqi;
+    else if (metric === 'temp') v = r.temperature_mean;
+    else if (metric === 'rain') v = r.rain_sum;
+    else if (metric === 'wind') v = r.wind_speed_max;
+    else if (metric === 'humidity') v = r.humidity_mean;
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
   const topHigh = useMemo(() => {
     return [...provinceRows]
-      .sort((a, b) => {
-        if (rankingMetric === 'aqi') return b.aqi - a.aqi;
-        if (rankingMetric === 'temp') return b.temperature_mean - a.temperature_mean;
-        if (rankingMetric === 'rain') return b.rain_sum - a.rain_sum;
-        if (rankingMetric === 'wind') return b.wind_speed_max - a.wind_speed_max;
-        return b.humidity_mean - a.humidity_mean;
-      })
+      .sort((a, b) => getRankingVal(b, rankingMetric) - getRankingVal(a, rankingMetric))
       .slice(0, 8);
   }, [provinceRows, rankingMetric]);
 
   const topLow = useMemo(() => {
     return [...provinceRows]
-      .sort((a, b) => {
-        if (rankingMetric === 'aqi') return a.aqi - b.aqi;
-        if (rankingMetric === 'temp') return a.temperature_mean - b.temperature_mean;
-        if (rankingMetric === 'rain') return a.rain_sum - b.rain_sum;
-        if (rankingMetric === 'wind') return a.wind_speed_max - a.wind_speed_max;
-        return a.humidity_mean - b.humidity_mean;
-      })
+      .sort((a, b) => getRankingVal(a, rankingMetric) - getRankingVal(b, rankingMetric))
       .slice(0, 8);
   }, [provinceRows, rankingMetric]);
 
