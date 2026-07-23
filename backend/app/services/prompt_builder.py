@@ -29,14 +29,26 @@ NGÔN NGỮ — BẮT BUỘC:
 ═══════════════════════════════════════════════════
 CHIẾN LƯỢC LỰA CHỌN NGUỒN DỮ LIỆU:
 ═══════════════════════════════════════════════════
-Dựa vào yêu cầu của người dùng về khoảng thời gian (VD: 3 ngày, 7 ngày, 1 tháng, 1 năm), \
-bạn PHẢI chọn 1 trong 2 chiến lược sinh code sau đây:
+Dựa vào yêu cầu của người dùng về khoảng thời gian, bạn PHẢI chọn 1 trong các chiến lược sau:
 
 ► CHIẾN LƯỢC 1: NẾU THỜI GIAN <= 7 NGÀY GẦN NHẤT
 - Chỉ dùng pandas đọc file CSV tĩnh.
-- Dòng code: `df = pd.read_csv("data/dataset.csv")`
+- Dòng code: `df = pd.read_csv("data/dataset7days.csv")`
 
-► CHIẾN LƯỢC 2: NẾU THỜI GIAN > 7 NGÀY (Hoặc toàn bộ dữ liệu lịch sử)
+► CHIẾN LƯỢC 2: NẾU THỜI GIAN 8–30 NGÀY GẦN NHẤT
+- Chỉ dùng pandas đọc file CSV tĩnh.
+- Dòng code: `df = pd.read_csv("data/dataset30days.csv")`
+
+► CHIẾN LƯỢC 3: NẾU THỜI GIAN 31–90 NGÀY GẦN NHẤT
+- Chỉ dùng pandas đọc file CSV tĩnh.
+- Dòng code: `df = pd.read_csv("data/dataset90days.csv")`
+
+► CHIẾN LƯỢC 4: NẾU THỜI GIAN > 90 NGÀY HOẶC TOÀN BỘ LỊCH SỬ
+- Chỉ dùng pandas đọc file CSV tĩnh.
+- Dòng code: `df = pd.read_csv("data/datasetall.csv")`
+
+► CHIẾN LƯỢC 5: NẾU NGƯỜI DÙNG YÊU CẦU KHOẢNG NGÀY TÙY CHỈNH CỤ THỂ BẰNG MỐC NGÀY (VD: "từ 2024-01-01 đến 2024-03-15", "tháng 3 năm 2025", "quý 1 năm 2024")
+  LƯU Ý: Nếu user chỉ nói "tùy chỉnh" mà không chỉ rõ mốc ngày cụ thể, hãy ưu tiên hỏi lại khoảng ngày hoặc dùng datasetall.csv nếu user muốn toàn bộ.
 - Phải kết nối trực tiếp vào PostgreSQL Database (Supabase) bằng thư viện `sqlalchemy`.
 - BẮT BUỘC sử dụng biến placeholder rỗng để người dùng tự điền cấu hình kết nối.
 - Dòng code kết nối mẫu:
@@ -64,7 +76,7 @@ WHERE ...
 df = pd.read_sql(query, engine)
 ```
 
-► SCHEMA CỦA DATABASE (Cho Chiến Lược 2):
+► SCHEMA CỦA DATABASE (Dành cho Chiến Lược 5 — kết nối trực tiếp):
 1. Bảng `cities`:
    - `city_id` (PK, text)
    - `city` (text) - Tên tỉnh thành (VD: Hanoi, Ho Chi Minh City)
@@ -85,11 +97,15 @@ df = pd.read_sql(query, engine)
 3. Mối quan hệ: `weather_daily.city_id = cities.city_id`
 
 ═══════════════════════════════════════════════════
-CONTEXT VỀ FILE CSV TĨNH (Cho Chiến Lược 1):
+CONTEXT VỀ FILE CSV TĨNH (Cho Chiến Lược 1–4):
 ═══════════════════════════════════════════════════
 {dataset_context}
 
-Dataset CSV chứa dữ liệu (tối đa 7 ngày gần nhất) bao gồm: date, city_id, province, country, latitude, longitude, temperature_max, temperature_min, temperature_mean, rain_sum, humidity_mean, wind_speed_max, aqi, cloud_cover_mean.
+Các file CSV tĩnh có schema giống nhau: date, city_id, province, country, latitude, longitude, temperature_max, temperature_min, temperature_mean, rain_sum, humidity_mean, wind_speed_max, aqi, cloud_cover_mean.
+- dataset7days.csv  : 7 ngày gần nhất
+- dataset30days.csv : 30 ngày gần nhất
+- dataset90days.csv : 90 ngày gần nhất
+- datasetall.csv    : Toàn bộ lịch sử (~60k+ rows)
 
 ═══════════════════════════════════════════════════
 QUY TẮC BẮT BUỘC KHI SINH CODE:
@@ -136,7 +152,7 @@ VÍ DỤ — action="answer":
 {{"action":"answer","status":"pending","message":"AQI (Air Quality Index) là chỉ số chất lượng không khí...","code":null,"explanation":null,"suggestions":[],"warnings":[]}}
 
 VÍ DỤ — action="generate_code" (luôn dùng plotly, gán vào fig):
-{{"action":"generate_code","status":"pending","message":"Tôi đã sinh code để vẽ biểu đồ nhiệt độ theo tỉnh...","code":"import pandas as pd\\nimport plotly.express as px\\n\\ndf = pd.read_csv('data/dataset.csv')\\nfig = px.line(df, x='date', y='temperature_mean', color='province', title='Xu hướng nhiệt độ theo tỉnh')\\nfig.update_layout(xaxis_title='Ngày', yaxis_title='Nhiệt độ (°C)')","explanation":"1. Đọc dữ liệu từ CSV\\n2. Vẽ line chart phân tách theo tỉnh\\n3. Cập nhật nhãn trục","suggestions":[],"warnings":[]}}
+{{"action":"generate_code","status":"pending","message":"Tôi đã sinh code để vẽ biểu đồ nhiệt độ theo tỉnh...","code":"import pandas as pd\\nimport plotly.express as px\\n\\ndf = pd.read_csv('data/dataset7days.csv')\\nfig = px.line(df, x='date', y='temperature_mean', color='province', title='Xu hướng nhiệt độ theo tỉnh (7 ngày gần nhất)')\\nfig.update_layout(xaxis_title='Ngày', yaxis_title='Nhiệt độ (°C)')","explanation":"1. Đọc dữ liệu từ CSV 7 ngày gần nhất\\n2. Vẽ line chart phân tách theo tỉnh\\n3. Cập nhật nhãn trục","suggestions":[],"warnings":[]}}
 
 VÍ DỤ — action="suggest_analysis":
 {{"action":"suggest_analysis","status":"pending","message":"Dưới đây là một số hướng phân tích thú vị...","code":null,"explanation":null,"suggestions":["So sánh AQI giữa các tỉnh miền Bắc và miền Nam","Phân tích xu hướng nhiệt độ theo tuần","Tìm mối tương quan giữa lượng mưa và AQI"],"warnings":[]}}
@@ -157,7 +173,7 @@ class PromptBuilder:
         Returns: (system_prompt, gemini_history_messages)
         """
         dataset_context = dataset_metadata.to_prompt_text() if dataset_metadata else \
-            "Chưa có file dataset.csv. Chỉ trả lời câu hỏi chung."
+            "Chưa có file CSV dataset. Chỉ trả lời câu hỏi chung, không sinh code đọc dữ liệu."
 
         system_prompt = SYSTEM_PROMPT_TEMPLATE.format(dataset_context=dataset_context)
 

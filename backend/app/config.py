@@ -38,7 +38,11 @@ class Settings(BaseSettings):
     log_retention_days: int = 30
 
     # === Dataset ===
-    dataset_path: str = "data/dataset.csv"
+    dataset_path: str = "data/dataset7days.csv"   # 7 ngày gần nhất (default cho AI /execute)
+    dataset_7d_path: str = "data/dataset7days.csv"
+    dataset_30d_path: str = "data/dataset30days.csv"
+    dataset_90d_path: str = "data/dataset90days.csv"
+    dataset_all_path: str = "data/datasetall.csv"
     cities_scope: str = "vietnam"      # "vietnam" | "all"
 
     # === Pipeline ===

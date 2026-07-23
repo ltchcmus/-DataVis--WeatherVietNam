@@ -10,7 +10,7 @@ from app.utils.logger import get_logger
 from app.pipeline.fetcher import load_cities, fetch_city
 from app.pipeline.transformer import transform_records
 from app.pipeline.loader import load_to_supabase, invalidate_cache
-from app.pipeline.csv_manager import export_rolling_csv
+from app.pipeline.csv_manager import export_all_csvs
 
 logger = get_logger(__name__)
 
@@ -68,7 +68,7 @@ def run_pipeline():
 
     # ── Post-pipeline: Export CSV + Invalidate cache ────────────
     logger.info(f"Upserted {fetched_total} total records, errors={errors}")
-    export_rolling_csv()
+    export_all_csvs()
     invalidate_cache("weather:*")
     invalidate_cache("meta:dataset")
 

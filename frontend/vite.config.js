@@ -28,6 +28,7 @@ export default defineConfig({
       '/logs': proxyOptions,
       '^/data(/|$)': proxyOptions,
       '/health': proxyOptions,
+      '/csv': proxyOptions,     // CSV preset files: /csv/7days, /csv/30days, /csv/90days, /csv/all
     }
   }
 })
