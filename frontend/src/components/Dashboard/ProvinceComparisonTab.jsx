@@ -293,19 +293,19 @@ const ProvinceComparisonTab = () => {
 
   const radarChartData = useMemo(() => {
     if (!radarProvinceSummary.length) return [];
-    
+
     return METRICS.map(metric => {
       const item = {
         subject: metric.fullLabel,
         key: metric.key,
         unit: metric.unit,
       };
-      
+
       const vals = radarProvinceSummary.map(p => p[metric.key]);
       const minVal = Math.min(...vals);
       const maxVal = Math.max(...vals);
       const range = maxVal - minVal;
-      
+
       const provincesToProcess = [radarProv1, radarProv2].filter(Boolean);
       provincesToProcess.forEach(provName => {
         const summary = radarProvinceSummary.find(p => p.province === provName);
@@ -319,7 +319,7 @@ const ProvinceComparisonTab = () => {
           item[`${provName}_raw`] = 0;
         }
       });
-      
+
       return item;
     });
   }, [radarProvinceSummary, radarProv1, radarProv2]);
@@ -495,11 +495,11 @@ const ProvinceComparisonTab = () => {
           <div className="chart-card-header">
             <div className="chart-title-flex">
               <Compass size={18} color="#2563EB" />
-              <h3 className="chart-card-title m-0">Hồ sơ khí hậu (Climate Profile)</h3>
+              <h3 className="chart-card-title m-0">Hồ sơ khí hậu theo tỉnh</h3>
             </div>
             <span className="chart-subtitle-badge">Biểu đồ Radar</span>
           </div>
-          
+
           <div className="radar-selector-row">
             <div className="radar-select-group">
               <label className="radar-select-label" htmlFor="radar-prov-1">Tỉnh 1</label>
@@ -552,66 +552,66 @@ const ProvinceComparisonTab = () => {
 
         <div className="chart-card ranking-section comparison-ranking">
           <div className="ranking-section-header-flex">
-          <div className="ranking-section-title">
-            <h2>{rankingTitle}</h2>
-            <p className="ranking-section-subtitle">Đổi biến để trả lời nhanh tỉnh nóng, mưa nhiều, AQI tốt, ẩm cao hoặc gió mạnh.</p>
+            <div className="ranking-section-title">
+              <h2>{rankingTitle}</h2>
+              <p className="ranking-section-subtitle">Đổi biến để trả lời nhanh tỉnh nóng, mưa nhiều, AQI tốt, ẩm cao hoặc gió mạnh.</p>
+            </div>
+            <div className="metric-toggle">
+              {METRICS.map(metric => (
+                <button
+                  key={metric.key}
+                  className={`toggle-btn ${rankingMetric === metric.key ? 'active' : ''}`}
+                  onClick={() => setRankingMetric(metric.key)}
+                >
+                  {metric.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="metric-toggle">
-            {METRICS.map(metric => (
-              <button
-                key={metric.key}
-                className={`toggle-btn ${rankingMetric === metric.key ? 'active' : ''}`}
-                onClick={() => setRankingMetric(metric.key)}
-              >
-                {metric.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        <div className="top10-chart-frame">
-          <ResponsiveContainer>
-            <BarChart
-              data={top10Rows}
-              layout="vertical"
-              margin={{ top: 12, right: 72, bottom: 8, left: 36 }}
-              barCategoryGap={8}
-            >
-              <CartesianGrid stroke="#e1e0d9" horizontal={false} />
-              <XAxis
-                type="number"
-                tick={{ fontSize: 12, fill: '#64748B' }}
-                axisLine={{ stroke: '#c3c2b7' }}
-                tickLine={false}
-              />
-              <YAxis
-                type="category"
-                dataKey="province"
-                width={116}
-                tick={{ fontSize: 12, fill: '#334155', fontWeight: 600 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <RechartsTooltip content={<RankingBarTooltip metric={rankingMetricConfig} />} cursor={{ fill: '#F1F5F9' }} />
-              <Bar
-                dataKey={rankingMetric}
-                name={rankingMetricConfig.fullLabel}
-                fill="#2a78d6"
-                radius={[0, 4, 4, 0]}
-                maxBarSize={24}
-                activeBar={{ fill: '#1c5cab' }}
+          <div className="top10-chart-frame">
+            <ResponsiveContainer>
+              <BarChart
+                data={top10Rows}
+                layout="vertical"
+                margin={{ top: 12, right: 72, bottom: 8, left: 36 }}
+                barCategoryGap={8}
               >
-                <LabelList
-                  dataKey={rankingMetric}
-                  position="right"
-                  formatter={value => formatValue(value, rankingMetricConfig.unit, rankingMetric === 'aqi' || rankingMetric === 'humidity_mean' ? 0 : 1)}
-                  className="top10-bar-label"
+                <CartesianGrid stroke="#e1e0d9" horizontal={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 12, fill: '#64748B' }}
+                  axisLine={{ stroke: '#c3c2b7' }}
+                  tickLine={false}
                 />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+                <YAxis
+                  type="category"
+                  dataKey="province"
+                  width={116}
+                  tick={{ fontSize: 12, fill: '#334155', fontWeight: 600 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <RechartsTooltip content={<RankingBarTooltip metric={rankingMetricConfig} />} cursor={{ fill: '#F1F5F9' }} />
+                <Bar
+                  dataKey={rankingMetric}
+                  name={rankingMetricConfig.fullLabel}
+                  fill="#2a78d6"
+                  radius={[0, 4, 4, 0]}
+                  maxBarSize={24}
+                  activeBar={{ fill: '#1c5cab' }}
+                >
+                  <LabelList
+                    dataKey={rankingMetric}
+                    position="right"
+                    formatter={value => formatValue(value, rankingMetricConfig.unit, rankingMetric === 'aqi' || rankingMetric === 'humidity_mean' ? 0 : 1)}
+                    className="top10-bar-label"
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );
