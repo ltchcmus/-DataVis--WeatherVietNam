@@ -1,0 +1,44 @@
+# --- File System & OS ---
+import os
+import sys
+import shutil
+import subprocess
+os.system
+os.popen
+os.remove
+os.rmdir
+os.environ
+shutil.rmtree
+subprocess.run
+subprocess.call
+subprocess.Popen
+open(
+pathlib.Path.unlink
+pathlib.Path.write
+
+# --- Network & Web (Chống request độc hại/botnet) ---
+import socket
+import requests
+import urllib
+import http
+import ftplib
+import smtplib
+import telnetlib
+
+# --- Arbitrary Code Execution (Thực thi mã nguồn động) ---
+eval(
+exec(
+compile(
+__import__
+import builtins
+import importlib
+
+# --- Memory & Low Level (Chống phá hệ thống) ---
+import ctypes
+import multiprocessing
+import threading
+
+# --- Insecure Deserialization ---
+import pickle
+import marshal
+import shelve

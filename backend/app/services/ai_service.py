@@ -62,7 +62,14 @@ def _load_history_from_db(conversation_id: str, db: Session) -> list[dict]:
                 except Exception as e:
                     logger.warning(f"Failed to parse images from DB for message {m.id}: {e}")
 
-            parts.append(m.content)
+            # Xây dựng nội dung text từ content, code và explanation
+            text_content = m.content or ""
+            if m.code:
+                text_content += f"\n\n```python\n{m.code}\n```"
+            if m.explanation:
+                text_content += f"\n\nGiải thích:\n{m.explanation}"
+            
+            parts.append(text_content)
             history.append({"role": gemini_role, "parts": parts})
         return history
     except Exception as e:
