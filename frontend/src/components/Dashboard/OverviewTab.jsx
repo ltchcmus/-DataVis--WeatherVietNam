@@ -9,30 +9,12 @@ import {
 } from 'react-leaflet';
 import {
   Thermometer, Droplets, Cloud, Wind, MapPin,
-  Sun, CloudSun, CloudRain, CloudDrizzle, Gauge, Map, SunMedium,
+  Sun, CloudSun, CloudRain, CloudDrizzle, Gauge, Map, SunMedium, Filter,
 } from 'lucide-react';
 import useWeatherData from '../../hooks/useWeatherData';
 import 'leaflet/dist/leaflet.css';
 
-/* ── Regional Province Mapping ─────────────────────────────────────── */
-const REGION_MAP = {
-  'Hà Nội': 'Bắc Bộ', 'Hải Phòng': 'Bắc Bộ', 'Bắc Ninh': 'Bắc Bộ', 'Hà Nam': 'Bắc Bộ', 'Hải Dương': 'Bắc Bộ',
-  'Hưng Yên': 'Bắc Bộ', 'Nam Định': 'Bắc Bộ', 'Ninh Bình': 'Bắc Bộ', 'Thái Bình': 'Bắc Bộ', 'Vĩnh Phúc': 'Bắc Bộ',
-  'Hà Giang': 'Bắc Bộ', 'Cao Bằng': 'Bắc Bộ', 'Bắc Kạn': 'Bắc Bộ', 'Lạng Sơn': 'Bắc Bộ', 'Tuyên Quang': 'Bắc Bộ',
-  'Thái Nguyên': 'Bắc Bộ', 'Phú Thọ': 'Bắc Bộ', 'Bắc Giang': 'Bắc Bộ', 'Quảng Ninh': 'Bắc Bộ', 'Lào Cai': 'Bắc Bộ',
-  'Yên Bái': 'Bắc Bộ', 'Điện Biên': 'Bắc Bộ', 'Hòa Bình': 'Bắc Bộ', 'Lai Châu': 'Bắc Bộ', 'Sơn La': 'Bắc Bộ',
-
-  'Thanh Hóa': 'Trung Bộ', 'Nghệ An': 'Trung Bộ', 'Hà Tĩnh': 'Trung Bộ', 'Quảng Bình': 'Trung Bộ', 'Quảng Trị': 'Trung Bộ',
-  'Thừa Thiên Huế': 'Trung Bộ', 'Đà Nẵng': 'Trung Bộ', 'Quảng Nam': 'Trung Bộ', 'Quảng Ngãi': 'Trung Bộ', 'Bình Định': 'Trung Bộ',
-  'Phú Yên': 'Trung Bộ', 'Khánh Hòa': 'Trung Bộ', 'Ninh Thuận': 'Trung Bộ', 'Bình Thuận': 'Trung Bộ',
-
-  'Lâm Đồng': 'Tây Nguyên', 'Đắk Lắk': 'Tây Nguyên', 'Đắk Nông': 'Tây Nguyên', 'Gia Lai': 'Tây Nguyên', 'Kon Tum': 'Tây Nguyên',
-
-  'TP. Hồ Chí Minh': 'Nam Bộ', 'Bình Dương': 'Nam Bộ', 'Bình Phước': 'Nam Bộ', 'Đồng Nai': 'Nam Bộ', 'Tây Ninh': 'Nam Bộ',
-  'Bà Rịa - Vũng Tàu': 'Nam Bộ', 'An Giang': 'Nam Bộ', 'Bạc Liêu': 'Nam Bộ', 'Bến Tre': 'Nam Bộ', 'Cà Mau': 'Nam Bộ',
-  'Cần Thơ': 'Nam Bộ', 'Đồng Tháp': 'Nam Bộ', 'Hậu Giang': 'Nam Bộ', 'Kiên Giang': 'Nam Bộ', 'Long An': 'Nam Bộ',
-  'Sóc Trăng': 'Nam Bộ', 'Tiền Giang': 'Nam Bộ', 'Trà Vinh': 'Nam Bộ', 'Vĩnh Long': 'Nam Bộ',
-};
+import { REGIONS, getRegionByProvince } from '../../constants/regions';
 
 /* ── AQI Tiers & Colors ────────────────────────────────────────────── */
 const AQI_TIERS = [
@@ -59,6 +41,22 @@ const RAIN_TIERS = [
   { key: 'torrential', min: 25.1, max: 999, label: 'Mưa rất to (>25mm)',          color: '#6366F1' },
 ];
 
+/* ── Wind Tiers & Colors ───────────────────────────────────────────── */
+const WIND_TIERS = [
+  { key: 'light',    min: 0,    max: 15,  label: 'Gió nhẹ (<15 km/h)',            color: '#10B981' },
+  { key: 'moderate', min: 15.1, max: 30,  label: 'Gió vừa (15 - 30 km/h)',        color: '#3B82F6' },
+  { key: 'strong',   min: 30.1, max: 50,  label: 'Gió mạnh (30 - 50 km/h)',       color: '#F59E0B' },
+  { key: 'gale',     min: 50.1, max: 999, label: 'Gió rất mạnh (>50 km/h)',       color: '#EF4444' },
+];
+
+/* ── Humidity Tiers & Colors ───────────────────────────────────────── */
+const HUMIDITY_TIERS = [
+  { key: 'dry',         min: 0,    max: 60,  label: 'Hanh khô (<60%)',             color: '#F59E0B' },
+  { key: 'comfortable', min: 60.1, max: 75,  label: 'Thoải mái (60 - 75%)',        color: '#10B981' },
+  { key: 'humid',       min: 75.1, max: 85,  label: 'Ẩm ướt (75 - 85%)',           color: '#3B82F6' },
+  { key: 'veryHumid',   min: 85.1, max: 100, label: 'Rất ẩm (>85%)',               color: '#6366F1' },
+];
+
 function getAqiTier(val) {
   return AQI_TIERS.find(t => val >= t.min && val <= t.max) || AQI_TIERS[AQI_TIERS.length - 1];
 }
@@ -71,10 +69,20 @@ function getRainTier(val) {
   return RAIN_TIERS.find(t => val >= t.min && val <= t.max) || RAIN_TIERS[RAIN_TIERS.length - 1];
 }
 
+function getWindTier(val) {
+  return WIND_TIERS.find(t => val >= t.min && val <= t.max) || WIND_TIERS[WIND_TIERS.length - 1];
+}
+
+function getHumidityTier(val) {
+  return HUMIDITY_TIERS.find(t => val >= t.min && val <= t.max) || HUMIDITY_TIERS[HUMIDITY_TIERS.length - 1];
+}
+
 function getTierForMetric(metric, row) {
   if (metric === 'aqi') return getAqiTier(row.aqi);
   if (metric === 'temp') return getTempTier(row.temperature_mean);
-  return getRainTier(row.rain_sum);
+  if (metric === 'rain') return getRainTier(row.rain_sum);
+  if (metric === 'wind') return getWindTier(row.wind_speed_max);
+  return getHumidityTier(row.humidity_mean);
 }
 
 function getWeatherCondition(rain, cloud) {
@@ -251,10 +259,17 @@ const StackedConditionTooltip = ({ active, payload, label }) => {
 const OverviewTab = () => {
   const { data, loading, error, dates, provinces } = useWeatherData();
   const [selectedDate, setSelectedDate]         = useState('all');
+  const [selectedRegion, setSelectedRegion]     = useState('all');
   const [selectedProvince, setSelectedProvince] = useState('all');
   const [viewMetric, setViewMetric]             = useState('aqi'); // 'aqi' | 'temp' | 'rain'
   const [rankingMetric, setRankingMetric]       = useState('aqi'); // 'aqi' | 'temp' | 'rain'
   const [activePieIndex, setActivePieIndex]     = useState(null);
+
+  /* ── Filtered Provinces based on Region ───────────────────────── */
+  const filteredProvinces = useMemo(() => {
+    if (selectedRegion === 'all') return provinces;
+    return provinces.filter(p => getRegionByProvince(p) === selectedRegion);
+  }, [provinces, selectedRegion]);
 
   /* ── Table Row Hover Tooltip State ─────────────────────────────── */
   const [hoveredTableRow, setHoveredTableRow]   = useState(null);
@@ -276,33 +291,35 @@ const OverviewTab = () => {
   /* ── Filtered data ─────────────────────────────────────────────── */
   const provinceRows = useMemo(() => {
     if (!data.length) return [];
-    const base = selectedDate === 'all' ? aggregateByProvince(data) : data.filter(r => r.date === selectedDate);
+    let base = selectedDate === 'all' ? aggregateByProvince(data) : data.filter(r => r.date === selectedDate);
+    if (selectedRegion !== 'all') {
+      base = base.filter(r => getRegionByProvince(r.province) === selectedRegion);
+    }
     if (selectedProvince === 'all') return base;
     return base.filter(r => r.province === selectedProvince);
-  }, [data, selectedDate, selectedProvince]);
+  }, [data, selectedDate, selectedRegion, selectedProvince]);
 
-  /* ── 4 Major Regions Aggregation (Bắc - Trung - Tây Nguyên - Nam) ── */
+  /* ── 6 Macro-Regions Aggregation ────────────────────────────────── */
   const regionalData = useMemo(() => {
     if (!provinceRows.length) return [];
-    const grouped = {
-      'Bắc Bộ':    { region: 'Bắc Bộ', tempSum: 0, rainSum: 0, aqiSum: 0, humiditySum: 0, windSum: 0, count: 0 },
-      'Trung Bộ':  { region: 'Trung Bộ', tempSum: 0, rainSum: 0, aqiSum: 0, humiditySum: 0, windSum: 0, count: 0 },
-      'Tây Nguyên': { region: 'Tây Nguyên', tempSum: 0, rainSum: 0, aqiSum: 0, humiditySum: 0, windSum: 0, count: 0 },
-      'Nam Bộ':    { region: 'Nam Bộ', tempSum: 0, rainSum: 0, aqiSum: 0, humiditySum: 0, windSum: 0, count: 0 },
-    };
-
-    provinceRows.forEach(r => {
-      const reg = REGION_MAP[r.province] || 'Bắc Bộ';
-      const g = grouped[reg];
-      g.tempSum     += r.temperature_mean;
-      g.rainSum     += r.rain_sum;
-      g.aqiSum      += r.aqi;
-      g.humiditySum += r.humidity_mean;
-      g.windSum     += r.wind_speed_max;
-      g.count++;
+    const grouped = {};
+    REGIONS.forEach(reg => {
+      grouped[reg] = { region: reg, tempSum: 0, rainSum: 0, aqiSum: 0, humiditySum: 0, windSum: 0, count: 0 };
     });
 
-    return Object.values(grouped).map(g => ({
+    provinceRows.forEach(r => {
+      const reg = getRegionByProvince(r.province);
+      if (grouped[reg]) {
+        grouped[reg].tempSum     += r.temperature_mean;
+        grouped[reg].rainSum     += r.rain_sum;
+        grouped[reg].aqiSum      += r.aqi;
+        grouped[reg].humiditySum += r.humidity_mean;
+        grouped[reg].windSum     += r.wind_speed_max;
+        grouped[reg].count++;
+      }
+    });
+
+    return Object.values(grouped).filter(g => g.count > 0).map(g => ({
       region: g.region,
       'Nhiệt độ TB': g.count ? +(g.tempSum / g.count).toFixed(1) : 0,
       'Lượng mưa TB': g.count ? +(g.rainSum / g.count).toFixed(1) : 0,
@@ -316,20 +333,21 @@ const OverviewTab = () => {
   /* ── Stacked Weather Condition Breakdown per Region ─────────────── */
   const regionalConditionData = useMemo(() => {
     if (!provinceRows.length) return [];
-    const grouped = {
-      'Bắc Bộ':    { region: 'Bắc Bộ', sunny: 0, partlyCloudy: 0, overcast: 0, rain: 0, heavyRain: 0 },
-      'Trung Bộ':  { region: 'Trung Bộ', sunny: 0, partlyCloudy: 0, overcast: 0, rain: 0, heavyRain: 0 },
-      'Tây Nguyên': { region: 'Tây Nguyên', sunny: 0, partlyCloudy: 0, overcast: 0, rain: 0, heavyRain: 0 },
-      'Nam Bộ':    { region: 'Nam Bộ', sunny: 0, partlyCloudy: 0, overcast: 0, rain: 0, heavyRain: 0 },
-    };
-
-    provinceRows.forEach(r => {
-      const reg = REGION_MAP[r.province] || 'Bắc Bộ';
-      const cond = getWeatherCondition(r.rain_sum, r.cloud_cover_mean || 40);
-      grouped[reg][cond.key]++;
+    const grouped = {};
+    REGIONS.forEach(reg => {
+      grouped[reg] = { region: reg, sunny: 0, partlyCloudy: 0, overcast: 0, rain: 0, heavyRain: 0, count: 0 };
     });
 
-    return Object.values(grouped);
+    provinceRows.forEach(r => {
+      const reg = getRegionByProvince(r.province);
+      if (grouped[reg]) {
+        const cond = getWeatherCondition(r.rain_sum, r.cloud_cover_mean || 40);
+        grouped[reg][cond.key]++;
+        grouped[reg].count++;
+      }
+    });
+
+    return Object.values(grouped).filter(g => g.count > 0);
   }, [provinceRows]);
 
   /* ── KPI calculations ─────────────────────────────────────────── */
@@ -359,7 +377,9 @@ const OverviewTab = () => {
   const activeTiers = useMemo(() => {
     if (viewMetric === 'aqi') return AQI_TIERS;
     if (viewMetric === 'temp') return TEMP_TIERS;
-    return RAIN_TIERS;
+    if (viewMetric === 'rain') return RAIN_TIERS;
+    if (viewMetric === 'wind') return WIND_TIERS;
+    return HUMIDITY_TIERS;
   }, [viewMetric]);
 
   /* ── Donut chart pie distribution ──────────────────────────────── */
@@ -371,12 +391,12 @@ const OverviewTab = () => {
 
     provinceRows.forEach(r => {
       const tier = getTierForMetric(viewMetric, r);
-      counts[tier.key]++;
+      if (tier) counts[tier.key]++;
     });
 
     return activeTiers
       .map(t => {
-        const count = counts[t.key];
+        const count = counts[t.key] || 0;
         const pct = +((count / total) * 100).toFixed(1);
         return {
           name: t.label,
@@ -409,7 +429,9 @@ const OverviewTab = () => {
       .sort((a, b) => {
         if (rankingMetric === 'aqi') return b.aqi - a.aqi;
         if (rankingMetric === 'temp') return b.temperature_mean - a.temperature_mean;
-        return b.rain_sum - a.rain_sum;
+        if (rankingMetric === 'rain') return b.rain_sum - a.rain_sum;
+        if (rankingMetric === 'wind') return b.wind_speed_max - a.wind_speed_max;
+        return b.humidity_mean - a.humidity_mean;
       })
       .slice(0, 8);
   }, [provinceRows, rankingMetric]);
@@ -419,7 +441,9 @@ const OverviewTab = () => {
       .sort((a, b) => {
         if (rankingMetric === 'aqi') return a.aqi - b.aqi;
         if (rankingMetric === 'temp') return a.temperature_mean - b.temperature_mean;
-        return a.rain_sum - b.rain_sum;
+        if (rankingMetric === 'rain') return a.rain_sum - b.rain_sum;
+        if (rankingMetric === 'wind') return a.wind_speed_max - a.wind_speed_max;
+        return a.humidity_mean - b.humidity_mean;
       })
       .slice(0, 8);
   }, [provinceRows, rankingMetric]);
@@ -428,13 +452,24 @@ const OverviewTab = () => {
   if (error) return <div className="overview-empty"><p>Lỗi: {error}</p></div>;
 
   const currentAqiTier = kpis ? getAqiTier(kpis.avgAqi) : null;
-  const metricTitle = viewMetric === 'aqi' ? 'Chất lượng AQI' : viewMetric === 'temp' ? 'Nhiệt độ' : 'Lượng mưa';
-  const rankingMetricTitle = rankingMetric === 'aqi' ? 'AQI Mỹ' : rankingMetric === 'temp' ? 'Nhiệt độ TB' : 'Lượng mưa';
+  const metricTitle = viewMetric === 'aqi' ? 'Chất lượng AQI'
+    : viewMetric === 'temp' ? 'Nhiệt độ'
+    : viewMetric === 'rain' ? 'Lượng mưa'
+    : viewMetric === 'wind' ? 'Tốc độ gió'
+    : 'Độ ẩm';
+
+  const rankingMetricTitle = rankingMetric === 'aqi' ? 'AQI Mỹ'
+    : rankingMetric === 'temp' ? 'Nhiệt độ TB'
+    : rankingMetric === 'rain' ? 'Lượng mưa'
+    : rankingMetric === 'wind' ? 'Tốc độ gió'
+    : 'Độ ẩm';
 
   const rankingValFormatter = (r) => {
     if (rankingMetric === 'aqi') return `${r.aqi}`;
     if (rankingMetric === 'temp') return `${r.temperature_mean}°C`;
-    return `${r.rain_sum} mm`;
+    if (rankingMetric === 'rain') return `${r.rain_sum} mm`;
+    if (rankingMetric === 'wind') return `${r.wind_speed_max} km/h`;
+    return `${r.humidity_mean}%`;
   };
 
   return (
@@ -472,6 +507,22 @@ const OverviewTab = () => {
         </div>
 
         <div className="filter-group">
+          <label className="filter-label" htmlFor="filter-region">Phân vùng</label>
+          <select
+            id="filter-region"
+            className="filter-select"
+            value={selectedRegion}
+            onChange={e => {
+              setSelectedRegion(e.target.value);
+              setSelectedProvince('all');
+            }}
+          >
+            <option value="all">Tất cả các vùng</option>
+            {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+
+        <div className="filter-group">
           <label className="filter-label" htmlFor="filter-province">Tỉnh / Thành phố</label>
           <select
             id="filter-province"
@@ -480,7 +531,7 @@ const OverviewTab = () => {
             onChange={e => setSelectedProvince(e.target.value)}
           >
             <option value="all">Tất cả tỉnh/thành</option>
-            {provinces.map(p => <option key={p} value={p}>{p}</option>)}
+            {filteredProvinces.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
       </div>
@@ -565,6 +616,18 @@ const OverviewTab = () => {
                 onClick={() => setViewMetric('rain')}
               >
                 Lượng mưa (mm)
+              </button>
+              <button
+                className={`toggle-btn ${viewMetric === 'wind' ? 'active' : ''}`}
+                onClick={() => setViewMetric('wind')}
+              >
+                Tốc độ gió (km/h)
+              </button>
+              <button
+                className={`toggle-btn ${viewMetric === 'humidity' ? 'active' : ''}`}
+                onClick={() => setViewMetric('humidity')}
+              >
+                Độ ẩm (%)
               </button>
             </div>
           </div>
@@ -821,6 +884,18 @@ const OverviewTab = () => {
             >
               Lượng mưa (mm)
             </button>
+            <button
+              className={`toggle-btn ${rankingMetric === 'wind' ? 'active' : ''}`}
+              onClick={() => setRankingMetric('wind')}
+            >
+              Tốc độ gió (km/h)
+            </button>
+            <button
+              className={`toggle-btn ${rankingMetric === 'humidity' ? 'active' : ''}`}
+              onClick={() => setRankingMetric('humidity')}
+            >
+              Độ ẩm (%)
+            </button>
           </div>
         </div>
 
@@ -832,7 +907,9 @@ const OverviewTab = () => {
               <h3>
                 {rankingMetric === 'aqi' ? 'Top Tỉnh/Thành AQI cao nhất (Ô nhiễm)' :
                  rankingMetric === 'temp' ? 'Top Tỉnh/Thành nóng nhất' :
-                 'Top Tỉnh/Thành mưa nhiều nhất'}
+                 rankingMetric === 'rain' ? 'Top Tỉnh/Thành mưa nhiều nhất' :
+                 rankingMetric === 'wind' ? 'Top Tỉnh/Thành gió mạnh nhất' :
+                 'Top Tỉnh/Thành độ ẩm cao nhất'}
               </h3>
               <p>Danh sách các tỉnh thành có chỉ số cao nhất</p>
             </div>
@@ -881,7 +958,9 @@ const OverviewTab = () => {
               <h3>
                 {rankingMetric === 'aqi' ? 'Top Tỉnh/Thành AQI thấp nhất (Trong lành)' :
                  rankingMetric === 'temp' ? 'Top Tỉnh/Thành mát nhất / lạnh nhất' :
-                 'Top Tỉnh/Thành mưa ít nhất / không mưa'}
+                 rankingMetric === 'rain' ? 'Top Tỉnh/Thành mưa ít nhất / không mưa' :
+                 rankingMetric === 'wind' ? 'Top Tỉnh/Thành gió nhẹ nhất' :
+                 'Top Tỉnh/Thành hanh khô nhất'}
               </h3>
               <p>Danh sách các tỉnh thành có chỉ số thấp nhất</p>
             </div>

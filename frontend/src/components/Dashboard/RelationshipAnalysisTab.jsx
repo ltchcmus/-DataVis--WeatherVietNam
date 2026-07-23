@@ -25,6 +25,7 @@ import {
   Wind,
 } from 'lucide-react';
 import useWeatherData from '../../hooks/useWeatherData';
+import { REGIONS, getRegionByProvince } from '../../constants/regions';
 
 const METRICS = [
   { key: 'temperature_mean', label: 'Nhiệt độ', shortLabel: 'Temp', fullLabel: 'Nhiệt độ trung bình', unit: '°C', icon: ThermometerSun },
@@ -533,15 +534,22 @@ function AqiGroupEffectChart({ data, animationKey }) {
 
 const RelationshipAnalysisTab = () => {
   const { data, loading, error, dates, provinces } = useWeatherData();
+  const [regionScope, setRegionScope] = useState('all');
   const [provinceScope, setProvinceScope] = useState('all');
   const [timePreset, setTimePreset] = useState('all');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [selectedFactor, setSelectedFactor] = useState('humidity_mean');
 
+  const filteredProvinces = useMemo(() => {
+    if (regionScope === 'all') return provinces;
+    return provinces.filter(p => getRegionByProvince(p) === regionScope);
+  }, [provinces, regionScope]);
+
   const filteredRows = useMemo(() => {
     let rows = data.filter(row => METRICS.every(metric => toFiniteNumber(row[metric.key]) !== null));
 
+    if (regionScope !== 'all') rows = rows.filter(row => getRegionByProvince(row.province) === regionScope);
     if (provinceScope !== 'all') rows = rows.filter(row => row.province === provinceScope);
 
     if (timePreset === '30d') {
@@ -556,7 +564,7 @@ const RelationshipAnalysisTab = () => {
     }
 
     return rows;
-  }, [data, dates, provinceScope, timePreset, customStart, customEnd]);
+  }, [data, dates, regionScope, provinceScope, timePreset, customStart, customEnd]);
 
   const correlationMatrix = useMemo(() => (
     METRICS.map(rowMetric => METRICS.map(columnMetric => ({
@@ -652,6 +660,7 @@ const RelationshipAnalysisTab = () => {
 
 
   const resetAllFilters = () => {
+    setRegionScope('all');
     setProvinceScope('all');
     setTimePreset('all');
     setCustomStart('');
@@ -1021,6 +1030,22 @@ const RelationshipAnalysisTab = () => {
 
       <div className="aqi-filter-bar">
         <div className="filter-group">
+          <label className="filter-label" htmlFor="aqi-relationship-region">Phân vùng</label>
+          <select
+            id="aqi-relationship-region"
+            className="filter-select"
+            value={regionScope}
+            onChange={event => {
+              setRegionScope(event.target.value);
+              setProvinceScope('all');
+            }}
+          >
+            <option value="all">Tất cả các vùng</option>
+            {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+
+        <div className="filter-group">
           <label className="filter-label" htmlFor="aqi-relationship-province">Tỉnh / Thành phố</label>
           <select
             id="aqi-relationship-province"
@@ -1028,8 +1053,8 @@ const RelationshipAnalysisTab = () => {
             value={provinceScope}
             onChange={event => setProvinceScope(event.target.value)}
           >
-            <option value="all">Toàn quốc</option>
-            {provinces.map(province => <option key={province} value={province}>{province}</option>)}
+            <option value="all">Tất cả tỉnh/thành</option>
+            {filteredProvinces.map(province => <option key={province} value={province}>{province}</option>)}
           </select>
         </div>
 

@@ -8,6 +8,7 @@ import {
   TrendingUp, Sparkles, Layers, ShieldAlert, Clock, Filter,
 } from 'lucide-react';
 import useWeatherData from '../../hooks/useWeatherData';
+import { REGIONS, getRegionByProvince } from '../../constants/regions';
 
 /* ── AQI Tiers & Colors ────────────────────────────────────────────── */
 const AQI_TIERS = [
@@ -125,7 +126,14 @@ const StackedTierTooltip = ({ active, payload, label }) => {
 
 const TimeTrendTab = () => {
   const { data, loading, error, dates, provinces } = useWeatherData();
+  const [selectedRegion, setSelectedRegion]     = useState('all');
   const [selectedProvince, setSelectedProvince] = useState('all');
+
+  /* ── Filtered Provinces based on Region ───────────────────────── */
+  const filteredProvinces = useMemo(() => {
+    if (selectedRegion === 'all') return provinces;
+    return provinces.filter(p => getRegionByProvince(p) === selectedRegion);
+  }, [provinces, selectedRegion]);
   
   /* ── Time Granularity & Range State ────────────────────────────── */
   const [granularity, setGranularity]           = useState('day'); // 'day' | 'week' | 'month'
@@ -140,8 +148,14 @@ const TimeTrendTab = () => {
   const timeSeriesData = useMemo(() => {
     if (!data.length) return [];
     
-    // 1. Province Filter
-    let filtered = selectedProvince === 'all' ? data : data.filter(r => r.province === selectedProvince);
+    // 1. Region & Province Filter
+    let filtered = data;
+    if (selectedRegion !== 'all') {
+      filtered = filtered.filter(r => getRegionByProvince(r.province) === selectedRegion);
+    }
+    if (selectedProvince !== 'all') {
+      filtered = filtered.filter(r => r.province === selectedProvince);
+    }
 
     // 2. Date Range Filter
     if (dates.length > 0) {
@@ -298,6 +312,25 @@ const TimeTrendTab = () => {
       {/* ── Filter Controls Row ────────────────────────────────────── */}
       <div className="filter-row-complex">
         
+        {/* Region Filter */}
+        <div className="filter-group">
+          <label className="filter-label" htmlFor="time-filter-region">
+            Phân vùng
+          </label>
+          <select
+            id="time-filter-region"
+            className="filter-select"
+            value={selectedRegion}
+            onChange={e => {
+              setSelectedRegion(e.target.value);
+              setSelectedProvince('all');
+            }}
+          >
+            <option value="all">Tất cả các vùng</option>
+            {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+
         {/* Province Filter */}
         <div className="filter-group">
           <label className="filter-label" htmlFor="time-filter-province">
@@ -309,8 +342,8 @@ const TimeTrendTab = () => {
             value={selectedProvince}
             onChange={e => setSelectedProvince(e.target.value)}
           >
-            <option value="all">Toàn quốc (63 Tỉnh/Thành)</option>
-            {provinces.map(p => <option key={p} value={p}>{p}</option>)}
+            <option value="all">Tất cả tỉnh/thành</option>
+            {filteredProvinces.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
 

@@ -8,6 +8,7 @@ import {
   BarChart3, Boxes, Flame, Gauge, Layers3, Compass, ThermometerSun,
 } from 'lucide-react';
 import useWeatherData from '../../hooks/useWeatherData';
+import { REGIONS, getRegionByProvince } from '../../constants/regions';
 
 const SERIES = ['#2a78d6', '#eb6834', '#1baf7a'];
 const OTHER_COLOR = '#94A3B8';
@@ -178,10 +179,16 @@ function BoxplotChart({ data }) {
 const ProvinceComparisonTab = () => {
   const { data, loading, error, dates, provinces } = useWeatherData();
   const [timePreset, setTimePreset] = useState('all');
+  const [regionScope, setRegionScope] = useState('all');
   const [provinceScope, setProvinceScope] = useState('all');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [rankingMetric, setRankingMetric] = useState('temperature_mean');
+
+  const filteredProvinces = useMemo(() => {
+    if (regionScope === 'all') return provinces;
+    return provinces.filter(p => getRegionByProvince(p) === regionScope);
+  }, [provinces, regionScope]);
 
   const filteredRows = useMemo(() => {
     let rows = data;
@@ -191,9 +198,10 @@ const ProvinceComparisonTab = () => {
       if (customStart) rows = rows.filter(r => r.date >= customStart);
       if (customEnd) rows = rows.filter(r => r.date <= customEnd);
     }
+    if (regionScope !== 'all') rows = rows.filter(r => getRegionByProvince(r.province) === regionScope);
     if (provinceScope !== 'all') rows = rows.filter(r => r.province === provinceScope);
     return rows;
-  }, [data, dates, timePreset, customStart, customEnd, provinceScope]);
+  }, [data, dates, timePreset, customStart, customEnd, regionScope, provinceScope]);
 
   const provinceSummary = useMemo(() => {
     const grouped = new Map();
@@ -375,6 +383,22 @@ const ProvinceComparisonTab = () => {
 
       <div className="filter-row-complex">
         <div className="filter-group">
+          <label className="filter-label" htmlFor="compare-region">Phân vùng</label>
+          <select
+            id="compare-region"
+            className="filter-select"
+            value={regionScope}
+            onChange={e => {
+              setRegionScope(e.target.value);
+              setProvinceScope('all');
+            }}
+          >
+            <option value="all">Tất cả các vùng</option>
+            {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+
+        <div className="filter-group">
           <label className="filter-label" htmlFor="compare-province">Tỉnh / Thành phố</label>
           <select
             id="compare-province"
@@ -382,8 +406,8 @@ const ProvinceComparisonTab = () => {
             value={provinceScope}
             onChange={e => setProvinceScope(e.target.value)}
           >
-            <option value="all">Toàn quốc</option>
-            {provinces.map(p => <option key={p} value={p}>{p}</option>)}
+            <option value="all">Tất cả tỉnh/thành</option>
+            {filteredProvinces.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
 
