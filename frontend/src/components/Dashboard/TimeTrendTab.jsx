@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import useWeatherData from '../../hooks/useWeatherData';
 import { REGIONS, getRegionByProvince } from '../../constants/regions';
+import DashboardSkeleton from './DashboardSkeleton';
 
 /* ── AQI Tiers & Colors ────────────────────────────────────────────── */
 const AQI_TIERS = [
@@ -300,7 +301,7 @@ const TimeTrendTab = () => {
     };
   }, [timeSeriesData]);
 
-  if (loading) return <div className="overview-empty"><p>Đang tải dữ liệu chuỗi thời gian…</p></div>;
+  if (loading) return <DashboardSkeleton message="Đang kết nối Supabase & tổng hợp chuỗi thời gian..." />;
   if (error) return <div className="overview-empty"><p>Lỗi: {error}</p></div>;
 
   const aqiStatus = kpis ? getAqiStatus(kpis.avgAqi) : null;

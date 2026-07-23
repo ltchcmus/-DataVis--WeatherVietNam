@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import useWeatherData from '../../hooks/useWeatherData';
 import { REGIONS, getRegionByProvince } from '../../constants/regions';
+import DashboardSkeleton from './DashboardSkeleton';
 
 const SERIES = ['#2a78d6', '#eb6834', '#1baf7a'];
 const OTHER_COLOR = '#94A3B8';
@@ -365,7 +366,7 @@ const ProvinceComparisonTab = () => {
     return { hottest, rainiest, cleanest, windiest };
   }, [provinceSummary]);
 
-  if (loading) return <div className="overview-empty"><p>Đang tải dữ liệu so sánh tỉnh...</p></div>;
+  if (loading) return <DashboardSkeleton message="Đang kết nối Supabase & xử lý so sánh tỉnh..." />;
   if (error) return <div className="overview-empty"><p>Lỗi: {error}</p></div>;
 
   return (

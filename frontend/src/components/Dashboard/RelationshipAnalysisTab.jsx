@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import useWeatherData from '../../hooks/useWeatherData';
 import { REGIONS, getRegionByProvince } from '../../constants/regions';
+import DashboardSkeleton from './DashboardSkeleton';
 
 const METRICS = [
   { key: 'temperature_mean', label: 'Nhiệt độ', shortLabel: 'Temp', fullLabel: 'Nhiệt độ trung bình', unit: '°C', icon: ThermometerSun },
@@ -668,7 +669,7 @@ const RelationshipAnalysisTab = () => {
     setSelectedFactor('humidity_mean');
   };
 
-  if (loading) return <div className="overview-empty"><p>Đang tải dữ liệu phân tích AQI...</p></div>;
+  if (loading) return <DashboardSkeleton message="Đang kết nối Supabase & phân tích tương quan..." />;
   if (error) return <div className="overview-empty"><p>Lỗi: {error}</p></div>;
 
   return (

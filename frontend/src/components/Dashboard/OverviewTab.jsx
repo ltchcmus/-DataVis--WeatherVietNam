@@ -15,6 +15,7 @@ import useWeatherData from '../../hooks/useWeatherData';
 import 'leaflet/dist/leaflet.css';
 
 import { REGIONS, getRegionByProvince } from '../../constants/regions';
+import DashboardSkeleton from './DashboardSkeleton';
 
 /* ── AQI Tiers & Colors ────────────────────────────────────────────── */
 const AQI_TIERS = [
@@ -259,11 +260,13 @@ const StackedConditionTooltip = ({ active, payload, label }) => {
 
 const OverviewTab = () => {
   const { data, loading, error, dates, provinces } = useWeatherData();
-  const [selectedDate, setSelectedDate]         = useState('all');
+  const [timePreset, setTimePreset]             = useState('7d'); // Default: 7 ngày gần nhất ('all' | '7d' | '30d' | '90d' | 'custom')
+  const [customStart, setCustomStart]           = useState('');
+  const [customEnd, setCustomEnd]               = useState('');
   const [selectedRegion, setSelectedRegion]     = useState('all');
   const [selectedProvince, setSelectedProvince] = useState('all');
-  const [viewMetric, setViewMetric]             = useState('aqi'); // 'aqi' | 'temp' | 'rain'
-  const [rankingMetric, setRankingMetric]       = useState('aqi'); // 'aqi' | 'temp' | 'rain'
+  const [viewMetric, setViewMetric]             = useState('aqi'); // 'aqi' | 'temp' | 'rain' | 'wind' | 'humidity'
+  const [rankingMetric, setRankingMetric]       = useState('aqi'); // 'aqi' | 'temp' | 'rain' | 'wind' | 'humidity'
   const [activePieIndex, setActivePieIndex]     = useState(null);
 
   /* ── Filtered Provinces based on Region ───────────────────────── */
@@ -292,13 +295,36 @@ const OverviewTab = () => {
   /* ── Filtered data ─────────────────────────────────────────────── */
   const provinceRows = useMemo(() => {
     if (!data.length) return [];
-    let base = selectedDate === 'all' ? aggregateByProvince(data) : data.filter(r => r.date === selectedDate);
+
+    // 1. Filter by Region & Province
+    let filtered = data;
     if (selectedRegion !== 'all') {
-      base = base.filter(r => getRegionByProvince(r.province) === selectedRegion);
+      filtered = filtered.filter(r => getRegionByProvince(r.province) === selectedRegion);
     }
-    if (selectedProvince === 'all') return base;
-    return base.filter(r => r.province === selectedProvince);
-  }, [data, selectedDate, selectedRegion, selectedProvince]);
+    if (selectedProvince !== 'all') {
+      filtered = filtered.filter(r => r.province === selectedProvince);
+    }
+
+    // 2. Filter by Time Preset
+    if (dates.length > 0) {
+      if (timePreset === '7d') {
+        const recentDates = new Set(dates.slice(-7));
+        filtered = filtered.filter(r => recentDates.has(r.date));
+      } else if (timePreset === '30d') {
+        const recentDates = new Set(dates.slice(-30));
+        filtered = filtered.filter(r => recentDates.has(r.date));
+      } else if (timePreset === '90d') {
+        const recentDates = new Set(dates.slice(-90));
+        filtered = filtered.filter(r => recentDates.has(r.date));
+      } else if (timePreset === 'custom') {
+        if (customStart) filtered = filtered.filter(r => r.date >= customStart);
+        if (customEnd) filtered = filtered.filter(r => r.date <= customEnd);
+      }
+    }
+
+    // 3. Aggregate across the filtered date range for each province
+    return aggregateByProvince(filtered);
+  }, [data, dates, selectedRegion, selectedProvince, timePreset, customStart, customEnd]);
 
   /* ── 6 Macro-Regions Aggregation ────────────────────────────────── */
   const regionalData = useMemo(() => {
@@ -448,7 +474,7 @@ const OverviewTab = () => {
       .slice(0, 8);
   }, [provinceRows, rankingMetric]);
 
-  if (loading) return <div className="overview-empty"><p>Đang tải dữ liệu…</p></div>;
+  if (loading) return <DashboardSkeleton message="Đang kết nối Supabase & đồng bộ dữ liệu thời tiết Việt Nam..." />;
   if (error) return <div className="overview-empty"><p>Lỗi: {error}</p></div>;
 
   const currentAqiTier = kpis ? getAqiTier(kpis.avgAqi) : null;
@@ -494,19 +520,6 @@ const OverviewTab = () => {
       {/* ── Filter Row ────────────────────────────────────────────── */}
       <div className="filter-row" id="overview-filters">
         <div className="filter-group">
-          <label className="filter-label" htmlFor="filter-date">Thời gian</label>
-          <select
-            id="filter-date"
-            className="filter-select"
-            value={selectedDate}
-            onChange={e => setSelectedDate(e.target.value)}
-          >
-            <option value="all">Tất cả thời gian</option>
-            {dates.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
-        </div>
-
-        <div className="filter-group">
           <label className="filter-label" htmlFor="filter-region">Phân vùng</label>
           <select
             id="filter-region"
@@ -534,6 +547,64 @@ const OverviewTab = () => {
             {filteredProvinces.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
+
+        {/* Date Range Preset Toggle (Default: 7 ngày gần nhất) */}
+        <div className="filter-group">
+          <label className="filter-label">Khoảng thời gian</label>
+          <div className="metric-toggle">
+            <button
+              className={`toggle-btn ${timePreset === '7d' ? 'active' : ''}`}
+              onClick={() => setTimePreset('7d')}
+            >
+              7 ngày gần nhất
+            </button>
+            <button
+              className={`toggle-btn ${timePreset === '30d' ? 'active' : ''}`}
+              onClick={() => setTimePreset('30d')}
+            >
+              30 ngày
+            </button>
+            <button
+              className={`toggle-btn ${timePreset === '90d' ? 'active' : ''}`}
+              onClick={() => setTimePreset('90d')}
+            >
+              90 ngày
+            </button>
+            <button
+              className={`toggle-btn ${timePreset === 'all' ? 'active' : ''}`}
+              onClick={() => setTimePreset('all')}
+            >
+              Tất cả
+            </button>
+            <button
+              className={`toggle-btn ${timePreset === 'custom' ? 'active' : ''}`}
+              onClick={() => setTimePreset('custom')}
+            >
+              Tùy chỉnh
+            </button>
+          </div>
+        </div>
+
+        {/* Custom Date Pickers */}
+        {timePreset === 'custom' && (
+          <div className="filter-group-custom-dates">
+            <input
+              type="date"
+              className="filter-date-input"
+              value={customStart}
+              onChange={e => setCustomStart(e.target.value)}
+              placeholder="Từ ngày"
+            />
+            <span className="date-sep">-</span>
+            <input
+              type="date"
+              className="filter-date-input"
+              value={customEnd}
+              onChange={e => setCustomEnd(e.target.value)}
+              placeholder="Đến ngày"
+            />
+          </div>
+        )}
       </div>
 
       {/* ── SECTION 1: KPI Stat Tiles Row ─────────────────────────── */}
@@ -787,7 +858,7 @@ const OverviewTab = () => {
           <div className="chart-card-header">
             <div className="chart-title-flex">
               <Map size={18} color="#2563EB" />
-              <h3 className="chart-card-title m-0">So sánh Chỉ số Thời tiết & AQI theo 4 Vùng Miền</h3>
+              <h3 className="chart-card-title m-0">So sánh Chỉ số Thời tiết & AQI theo Vùng Miền</h3>
             </div>
             <span className="chart-subtitle-badge">Bắc • Trung • Tây Nguyên • Nam</span>
           </div>
@@ -821,7 +892,7 @@ const OverviewTab = () => {
           <div className="chart-card-header">
             <div className="chart-title-flex">
               <SunMedium size={18} color="#F59E0B" />
-              <h3 className="chart-card-title m-0">Phân bố Trạng thái Thời tiết theo 4 Vùng Miền</h3>
+              <h3 className="chart-card-title m-0">Phân bố Trạng thái Thời tiết theo Vùng Miền</h3>
             </div>
             <span className="chart-subtitle-badge">Số lượng tỉnh/thành</span>
           </div>

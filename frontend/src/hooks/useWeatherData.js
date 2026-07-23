@@ -50,6 +50,32 @@ function mapSupabaseRecord(rec) {
   };
 }
 
+async function fetchAllSupabaseRecords(supabaseUrl, supabaseKey) {
+  const pageSize = 1000;
+  const maxPages = 25; // 25,000 records in parallel covers 2024, 2025, and 2026
+  const pagePromises = [];
+
+  for (let page = 0; page < maxPages; page++) {
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+    const endpoint = `${supabaseUrl}/rest/v1/weather_daily?select=*,cities(city,country,latitude,longitude)&order=date.desc`;
+    
+    pagePromises.push(
+      fetch(endpoint, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Range': `${from}-${to}`,
+        },
+      }).then(res => (res.ok ? res.json() : []))
+    );
+  }
+
+  const results = await Promise.all(pagePromises);
+  const allRawData = results.flat();
+  return allRawData;
+}
+
 export default function useWeatherData() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,23 +88,14 @@ export default function useWeatherData() {
 
       if (supabaseUrl && supabaseKey) {
         try {
-          const endpoint = `${supabaseUrl}/rest/v1/weather_daily?select=*,cities(city,country,latitude,longitude)&order=date.asc&limit=10000`;
-          const res = await fetch(endpoint, {
-            headers: {
-              'apikey': supabaseKey,
-              'Authorization': `Bearer ${supabaseKey}`,
-              'Range-Unit': 'items',
-            },
-          });
-
-          if (res.ok) {
-            const rawData = await res.json();
-            if (Array.isArray(rawData) && rawData.length > 0) {
-              const mapped = rawData.map(mapSupabaseRecord);
-              setData(mapped);
-              setLoading(false);
-              return;
-            }
+          const rawData = await fetchAllSupabaseRecords(supabaseUrl, supabaseKey);
+          if (Array.isArray(rawData) && rawData.length > 0) {
+            const mapped = rawData.map(mapSupabaseRecord);
+            // Sort ascending by date
+            mapped.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+            setData(mapped);
+            setLoading(false);
+            return;
           }
         } catch (err) {
           console.warn('Failed to fetch from Supabase, falling back to local dataset.csv:', err);
