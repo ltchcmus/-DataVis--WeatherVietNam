@@ -42,3 +42,14 @@ Xây dựng Tab 3 "So sánh giữa các tỉnh" cho dashboard thời tiết Vi�
 | 5 | Tương tác điều hướng | Hover tooltip, sort table, province multi-select, search |
 | 6 | Thiết kế hấp dẫn | Gradient heatmap, animated transitions, premium card design |
 | 7 | Phân tích dữ liệu | Normalized heatmap, ranking table, boxplot phân bố |
+
+## Cập nhật Tab 3: Thay đổi Scatter Plot sang Radar Chart (2026-07-23)
+- Thay đổi Scatter Plot (Độ ẩm vs Nhiệt độ) sang biểu đồ Radar so sánh hồ sơ khí hậu (Climate Profile).
+- Cho phép người dùng chọn 1 hoặc 2 tỉnh trực tiếp trên widget biểu đồ để so sánh chéo.
+- Hiển thị 5 biến khí hậu chính: Nhiệt độ, Mưa, Độ ẩm, Gió, AQI.
+- Tích hợp tooltip tùy chỉnh để hiển thị thông số gốc thực tế (raw value) kèm đơn vị tương ứng.
+
+### Files đã chỉnh sửa
+- `frontend/src/components/Dashboard/ProvinceComparisonTab.jsx` — Tích hợp Recharts RadarChart và bộ lọc tỉnh cục bộ.
+- `frontend/src/styles/dashboard.css` — Thêm CSS class cho selector và tooltip của Radar.
+- `docs/dashboard.md` — Cập nhật tài liệu thiết kế.

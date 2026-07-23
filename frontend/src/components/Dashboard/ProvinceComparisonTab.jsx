@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
-  ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, ZAxis,
-  CartesianGrid, Tooltip as RechartsTooltip, Legend, BarChart, Bar, LabelList,
+  ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  Legend, BarChart, Bar, LabelList, RadarChart, PolarGrid, PolarAngleAxis,
+  PolarRadiusAxis, Radar,
 } from 'recharts';
 import {
-  BarChart3, Boxes, Flame, Gauge, Layers3, Search, ThermometerSun,
+  BarChart3, Boxes, Flame, Gauge, Layers3, Compass, ThermometerSun,
 } from 'lucide-react';
 import useWeatherData from '../../hooks/useWeatherData';
 
@@ -51,32 +52,30 @@ function getHeatColor(value) {
   return `hsl(212 76% ${lightness}%)`;
 }
 
-function ProvinceTooltip({ active, payload }) {
-  if (!active || !payload?.length) return null;
-  const item = payload[0].payload;
+function RadarTooltip({ active, payload }) {
+  if (!active || !payload || !payload.length) return null;
+  const dataPoint = payload[0].payload;
+  const { subject, unit } = dataPoint;
   return (
-    <div className="viz-tooltip province-tooltip">
+    <div className="viz-tooltip radar-tooltip">
       <div className="viz-tooltip-header">
-        <span className="viz-tooltip-label">{item.province}</span>
+        <span className="viz-tooltip-label">{subject}</span>
       </div>
       <div className="viz-tooltip-divider" />
       <div className="viz-tooltip-body">
-        <div className="viz-tooltip-row">
-          <span className="viz-tooltip-metric">Nhiệt độ</span>
-          <span className="viz-tooltip-value">{formatValue(item.temperature_mean, '°C')}</span>
-        </div>
-        <div className="viz-tooltip-row">
-          <span className="viz-tooltip-metric">Độ ẩm</span>
-          <span className="viz-tooltip-value">{formatValue(item.humidity_mean, '%', 0)}</span>
-        </div>
-        <div className="viz-tooltip-row">
-          <span className="viz-tooltip-metric">Mưa</span>
-          <span className="viz-tooltip-value">{formatValue(item.rain_sum, ' mm')}</span>
-        </div>
-        <div className="viz-tooltip-row">
-          <span className="viz-tooltip-metric">AQI</span>
-          <span className="viz-tooltip-value">{formatValue(item.aqi, '', 0)}</span>
-        </div>
+        {payload.map((entry) => {
+          const provName = entry.name;
+          const rawValue = dataPoint[`${provName}_raw`];
+          const digits = (dataPoint.key === 'aqi' || dataPoint.key === 'humidity_mean') ? 0 : 1;
+          return (
+            <div key={provName} className="viz-tooltip-row" style={{ color: entry.color, display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+              <span className="viz-tooltip-metric" style={{ fontWeight: 600 }}>{provName}:</span>
+              <span className="viz-tooltip-value">
+                {formatValue(rawValue, unit, digits)}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -238,24 +237,92 @@ const ProvinceComparisonTab = () => {
     }));
   }, [provinceSummary]);
 
-  const selectedScatterProvinces = useMemo(() => {
-    if (provinceScope !== 'all') return [provinceScope];
-    return [...provinceSummary]
-      .sort((a, b) => b.count - a.count || b.temperature_mean - a.temperature_mean)
-      .slice(0, 3)
-      .map(row => row.province);
-  }, [provinceSummary, provinceScope]);
+  const [radarProv1, setRadarProv1] = useState('Hà Nội');
+  const [radarProv2, setRadarProv2] = useState('TP.HCM');
 
-  const scatterGroups = useMemo(() => {
-    const groups = selectedScatterProvinces.map((province, index) => ({
-      province,
-      color: SERIES[index],
-      rows: filteredRows.filter(row => row.province === province),
-    }));
-    const otherRows = filteredRows.filter(row => !selectedScatterProvinces.includes(row.province));
-    if (otherRows.length) groups.push({ province: 'Khác', color: OTHER_COLOR, rows: otherRows });
-    return groups;
-  }, [filteredRows, selectedScatterProvinces]);
+  useEffect(() => {
+    if (provinces.length > 0) {
+      if (!radarProv1 || !provinces.includes(radarProv1)) {
+        setRadarProv1(provinces[0]);
+      }
+      if (!radarProv2 || !provinces.includes(radarProv2)) {
+        const nextProv = provinces.find(p => p !== (radarProv1 || provinces[0])) || '';
+        setRadarProv2(nextProv);
+      }
+    }
+  }, [provinces]);
+
+  useEffect(() => {
+    if (provinceScope !== 'all' && provinces.includes(provinceScope)) {
+      setRadarProv1(provinceScope);
+      if (provinceScope === radarProv2) {
+        setRadarProv2('');
+      }
+    }
+  }, [provinceScope, provinces, radarProv2]);
+
+  const filteredRowsForRadar = useMemo(() => {
+    let rows = data;
+    if (timePreset === '30d') rows = rows.filter(r => dates.slice(-30).includes(r.date));
+    if (timePreset === '90d') rows = rows.filter(r => dates.slice(-90).includes(r.date));
+    if (timePreset === 'custom') {
+      if (customStart) rows = rows.filter(r => r.date >= customStart);
+      if (customEnd) rows = rows.filter(r => r.date <= customEnd);
+    }
+    return rows;
+  }, [data, dates, timePreset, customStart, customEnd]);
+
+  const radarProvinceSummary = useMemo(() => {
+    const grouped = new Map();
+    filteredRowsForRadar.forEach(row => {
+      if (!grouped.has(row.province)) grouped.set(row.province, []);
+      grouped.get(row.province).push(row);
+    });
+
+    return [...grouped.entries()].map(([province, rows]) => {
+      return {
+        province,
+        temperature_mean: average(rows, 'temperature_mean'),
+        rain_sum: average(rows, 'rain_sum'),
+        humidity_mean: average(rows, 'humidity_mean'),
+        wind_speed_max: average(rows, 'wind_speed_max'),
+        aqi: average(rows, 'aqi'),
+      };
+    });
+  }, [filteredRowsForRadar]);
+
+  const radarChartData = useMemo(() => {
+    if (!radarProvinceSummary.length) return [];
+    
+    return METRICS.map(metric => {
+      const item = {
+        subject: metric.fullLabel,
+        key: metric.key,
+        unit: metric.unit,
+      };
+      
+      const vals = radarProvinceSummary.map(p => p[metric.key]);
+      const minVal = Math.min(...vals);
+      const maxVal = Math.max(...vals);
+      const range = maxVal - minVal;
+      
+      const provincesToProcess = [radarProv1, radarProv2].filter(Boolean);
+      provincesToProcess.forEach(provName => {
+        const summary = radarProvinceSummary.find(p => p.province === provName);
+        if (summary) {
+          const val = summary[metric.key];
+          const normalized = range === 0 ? 60 : 20 + ((val - minVal) / range) * 80;
+          item[provName] = normalized;
+          item[`${provName}_raw`] = val;
+        } else {
+          item[provName] = 20;
+          item[`${provName}_raw`] = 0;
+        }
+      });
+      
+      return item;
+    });
+  }, [radarProvinceSummary, radarProv1, radarProv2]);
 
   const boxplotRows = useMemo(() => {
     return [...provinceSummary]
@@ -278,8 +345,8 @@ const ProvinceComparisonTab = () => {
   const top10Rows = useMemo(() => rankedRows.slice(0, 10), [rankedRows]);
 
   const rankingTitle = rankingMetric === 'aqi'
-    ? 'Top 10 tỉnh/thành có AQI tốt nhất'
-    : `Top 10 tỉnh/thành theo ${rankingMetricConfig.fullLabel.toLowerCase()}`;
+    ? 'Top 10 tỉnh/thành phố có AQI tốt nhất'
+    : `Top 10 tỉnh/thành phố theo ${rankingMetricConfig.fullLabel.toLowerCase()}`;
 
   const headline = useMemo(() => {
     if (!provinceSummary.length) return null;
@@ -427,32 +494,58 @@ const ProvinceComparisonTab = () => {
         <figure className="chart-card">
           <div className="chart-card-header">
             <div className="chart-title-flex">
-              <Search size={18} color="#2563EB" />
-              <h3 className="chart-card-title m-0">Độ ẩm vs Nhiệt độ</h3>
+              <Compass size={18} color="#2563EB" />
+              <h3 className="chart-card-title m-0">Hồ sơ khí hậu (Climate Profile)</h3>
             </div>
-            <span className="chart-subtitle-badge">Tỉnh nổi bật + nhóm khác</span>
+            <span className="chart-subtitle-badge">Biểu đồ Radar</span>
           </div>
+          
+          <div className="radar-selector-row">
+            <div className="radar-select-group">
+              <label className="radar-select-label" htmlFor="radar-prov-1">Tỉnh 1</label>
+              <select
+                id="radar-prov-1"
+                value={radarProv1}
+                onChange={e => {
+                  setRadarProv1(e.target.value);
+                  if (e.target.value === radarProv2) setRadarProv2('');
+                }}
+                className="filter-select radar-select"
+              >
+                {provinces.map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+            <div className="radar-select-group">
+              <label className="radar-select-label" htmlFor="radar-prov-2">Tỉnh 2</label>
+              <select
+                id="radar-prov-2"
+                value={radarProv2}
+                onChange={e => setRadarProv2(e.target.value)}
+                className="filter-select radar-select"
+              >
+                <option value="">(Không so sánh)</option>
+                {provinces.filter(p => p !== radarProv1).map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div className="comparison-chart-frame">
             <ResponsiveContainer>
-              <ScatterChart margin={{ top: 16, right: 24, bottom: 20, left: 0 }}>
-                <CartesianGrid stroke="#e1e0d9" vertical={false} />
-                <XAxis type="number" dataKey="humidity_mean" name="Độ ẩm" unit="%" tick={{ fontSize: 12, fill: '#64748B' }} />
-                <YAxis type="number" dataKey="temperature_mean" name="Nhiệt độ" unit="°C" tick={{ fontSize: 12, fill: '#64748B' }} />
-                <ZAxis type="number" dataKey="rain_sum" range={[48, 180]} name="Mưa" unit="mm" />
-                <RechartsTooltip content={<ProvinceTooltip />} cursor={{ stroke: '#898781', strokeWidth: 1 }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                {scatterGroups.map(group => (
-                  <Scatter
-                    key={group.province}
-                    name={group.province}
-                    data={group.rows}
-                    fill={group.color}
-                    fillOpacity={group.province === 'Khác' ? 0.28 : 0.78}
-                    stroke="#ffffff"
-                    strokeWidth={2}
-                  />
-                ))}
-              </ScatterChart>
+              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarChartData}>
+                <PolarGrid stroke="#cbd5e1" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 11, fontWeight: 500 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <Radar name={radarProv1} dataKey={radarProv1} stroke="#2563EB" fill="#2563EB" fillOpacity={0.25} />
+                {radarProv2 && (
+                  <Radar name={radarProv2} dataKey={radarProv2} stroke="#EA580C" fill="#EA580C" fillOpacity={0.25} />
+                )}
+                <RechartsTooltip content={<RadarTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+              </RadarChart>
             </ResponsiveContainer>
           </div>
         </figure>

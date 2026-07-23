@@ -1454,4 +1454,35 @@ body, html {
   .heatmap-row { min-width: 560px; }
 }
 
+/* Radar Chart styles */
+.radar-selector-row {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem 0.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.radar-select-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.radar-select-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.radar-select {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  border-radius: 0.375rem;
+}
+
+.radar-tooltip {
+  min-width: 140px;
+}
+
 
