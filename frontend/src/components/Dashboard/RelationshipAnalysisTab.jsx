@@ -416,7 +416,7 @@ function AqiGroupEffectChart({ data, animationKey }) {
   const width = 940;
   const height = 330;
   const labelWidth = 132;
-  const detailWidth = 250;
+  const detailWidth = 210;
   const plotLeft = labelWidth;
   const plotRight = width - detailWidth;
   const plotWidth = plotRight - plotLeft;
@@ -441,10 +441,10 @@ function AqiGroupEffectChart({ data, animationKey }) {
         role="img"
         aria-label="So sánh điều kiện thời tiết giữa nhóm AQI cao và AQI thấp"
       >
-        <text x={plotLeft} y={20} className="aqi-effect-axis-caption">Thấp hơn trong nhóm AQI cao</text>
-        <text x={plotRight} y={20} textAnchor="end" className="aqi-effect-axis-caption">Cao hơn trong nhóm AQI cao</text>
+        <text x={plotLeft} y={20} className="aqi-effect-axis-caption">Thấp hơn</text>
+        <text x={plotRight} y={20} textAnchor="end" className="aqi-effect-axis-caption">Cao hơn</text>
         <text x={(plotLeft + plotRight) / 2} y={39} textAnchor="middle" className="aqi-effect-axis-title">
-          Chênh lệch chuẩn hóa giữa nhóm AQI cao và thấp (Cohen&apos;s d)
+          Chênh lệch chuẩn hóa (Cohen&apos;s d)
         </text>
 
         {ticks.map(tick => {
@@ -520,11 +520,8 @@ function AqiGroupEffectChart({ data, animationKey }) {
               >
                 d = {formatSigned(item.effectSize)}
               </text>
-              <text x={plotRight + 20} y={y - 3} className="aqi-effect-detail">
-                Thấp: {formatValue(item.lowMean, metric.unit)} · Cao: {formatValue(item.highMean, metric.unit)}
-              </text>
-              <text x={plotRight + 20} y={y + 14} className="aqi-effect-detail-note">
-                {effectSizeStrength(item.effectSize)} · {item.effectSize >= 0 ? 'cao hơn' : 'thấp hơn'} trong nhóm AQI cao
+              <text x={plotRight + 16} y={y + 4} className="aqi-effect-detail">
+                {formatValue(item.lowMean, metric.unit)} → {formatValue(item.highMean, metric.unit)}
               </text>
             </g>
           );
@@ -949,10 +946,6 @@ const RelationshipAnalysisTab = () => {
           font-size: 10.5px;
           font-weight: 700;
         }
-        .aqi-effect-detail-note {
-          fill: #64748b;
-          font-size: 10px;
-        }
         .aqi-effect-line {
           stroke-dasharray: 1;
           stroke-dashoffset: 1;
@@ -1021,9 +1014,7 @@ const RelationshipAnalysisTab = () => {
       <div className="aqi-goal-strip">
         <div className="aqi-goal-copy">
           <h2>Những điều kiện thời tiết nào thường đi kèm chất lượng không khí xấu?</h2>
-          <p>
-            Xác định yếu tố liên hệ rõ nhất với AQI và so sánh điều kiện thời tiết giữa nhóm AQI cao với nhóm AQI thấp.
-          </p>
+          <p>Phân tích yếu tố liên hệ với AQI và khác biệt giữa hai nhóm.</p>
         </div>
         <span className="aqi-goal-badge"><Sparkles size={14} /> Trọng tâm: AQI</span>
       </div>
@@ -1170,7 +1161,7 @@ const RelationshipAnalysisTab = () => {
             <span style={{ fontWeight: 700, color: '#334155' }}>Nghịch</span>
             <div className="aqi-legend-scale" />
             <span style={{ fontWeight: 700, color: '#334155' }}>Thuận</span>
-            <span>Ô càng đậm, mối liên hệ càng mạnh.</span>
+            <span>Màu đậm = |r| lớn.</span>
           </div>
         </figure>
       </div>
@@ -1182,7 +1173,7 @@ const RelationshipAnalysisTab = () => {
             <div>
               <h3 className="chart-card-title m-0">Khám phá quan hệ với AQI</h3>
               <p style={{ margin: '3px 0 0', color: '#64748B', fontSize: 10.8 }}>
-                Chọn một yếu tố để xem phân bố, ngoại lệ và xu hướng tuyến tính.
+                Chọn yếu tố để xem quan hệ với AQI.
               </p>
             </div>
           </div>
@@ -1253,8 +1244,7 @@ const RelationshipAnalysisTab = () => {
         </div>
 
         <div className="aqi-scatter-footer">
-          <span><strong>{selectedMetric.fullLabel} ↔ AQI:</strong> r = {selectedCorrelation.toFixed(2)}</span>
-          <span>{compactRelation(selectedCorrelation)}</span>
+          <span><strong>{selectedMetric.label} ↔ AQI:</strong> r = {selectedCorrelation.toFixed(2)} · {compactRelation(selectedCorrelation)}</span>
         </div>
       </figure>
 
@@ -1265,11 +1255,11 @@ const RelationshipAnalysisTab = () => {
             <div>
               <h3 className="chart-card-title m-0">Nhóm AQI cao khác nhóm AQI thấp như thế nào?</h3>
               <p style={{ margin: '3px 0 0', color: '#64748B', fontSize: 10.8 }}>
-                So sánh top 25% AQI cao với bottom 25% AQI thấp bằng chênh lệch chuẩn hóa.
+                So sánh 25% AQI cao nhất và thấp nhất.
               </p>
             </div>
           </div>
-          <span className="chart-subtitle-badge">Cohen&apos;s d · |d| càng lớn, khác biệt càng rõ</span>
+          <span className="chart-subtitle-badge">Cohen&apos;s d</span>
         </div>
 
         <div className="aqi-effect-frame">
@@ -1280,19 +1270,19 @@ const RelationshipAnalysisTab = () => {
           <div className="aqi-profile-legend">
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#3B82F6' }} />
-              Thấp hơn trong nhóm AQI cao
+              Thấp hơn
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#EF6A5B' }} />
-              Cao hơn trong nhóm AQI cao
+              Cao hơn
             </span>
             <span>
-              AQI thấp ≤ {aqiGroupComparison.lowThreshold.toFixed(0)} ({aqiGroupComparison.lowCount} quan sát) · AQI cao ≥ {aqiGroupComparison.highThreshold.toFixed(0)} ({aqiGroupComparison.highCount} quan sát)
+              Thấp ≤ {aqiGroupComparison.lowThreshold.toFixed(0)} (n={aqiGroupComparison.lowCount}) · Cao ≥ {aqiGroupComparison.highThreshold.toFixed(0)} (n={aqiGroupComparison.highCount})
             </span>
           </div>
           {strongestGroupDifference && (
             <span className="aqi-profile-insight">
-              Khác biệt lớn nhất: {strongestGroupDifference.fullLabel} {strongestGroupDifference.effectSize >= 0 ? 'cao hơn' : 'thấp hơn'} trong nhóm AQI cao (d = {formatSigned(strongestGroupDifference.effectSize)}).
+              Lớn nhất: {strongestGroupDifference.label} · d = {formatSigned(strongestGroupDifference.effectSize)}
             </span>
           )}
         </div>
