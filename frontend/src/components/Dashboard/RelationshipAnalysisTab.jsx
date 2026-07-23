@@ -553,7 +553,10 @@ const RelationshipAnalysisTab = () => {
     if (regionScope !== 'all') rows = rows.filter(row => getRegionByProvince(row.province) === regionScope);
     if (provinceScope !== 'all') rows = rows.filter(row => row.province === provinceScope);
 
-    if (timePreset === '30d') {
+    if (timePreset === '7d') {
+      const recentDates = new Set(dates.slice(-7));
+      rows = rows.filter(row => recentDates.has(row.date));
+    } else if (timePreset === '30d') {
       const recentDates = new Set(dates.slice(-30));
       rows = rows.filter(row => recentDates.has(row.date));
     } else if (timePreset === '90d') {
@@ -1062,9 +1065,10 @@ const RelationshipAnalysisTab = () => {
         <div className="filter-group">
           <label className="filter-label">Khoảng thời gian</label>
           <div className="metric-toggle">
-            <button type="button" className={`toggle-btn ${timePreset === 'all' ? 'active' : ''}`} onClick={() => setTimePreset('all')}>Tất cả</button>
+            <button type="button" className={`toggle-btn ${timePreset === '7d' ? 'active' : ''}`} onClick={() => setTimePreset('7d')}>7 ngày</button>
             <button type="button" className={`toggle-btn ${timePreset === '30d' ? 'active' : ''}`} onClick={() => setTimePreset('30d')}>30 ngày</button>
             <button type="button" className={`toggle-btn ${timePreset === '90d' ? 'active' : ''}`} onClick={() => setTimePreset('90d')}>90 ngày</button>
+            <button type="button" className={`toggle-btn ${timePreset === 'all' ? 'active' : ''}`} onClick={() => setTimePreset('all')}>Tất cả</button>
             <button type="button" className={`toggle-btn ${timePreset === 'custom' ? 'active' : ''}`} onClick={() => setTimePreset('custom')}>Tùy chỉnh</button>
           </div>
         </div>

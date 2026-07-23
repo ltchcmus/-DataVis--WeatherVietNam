@@ -552,36 +552,11 @@ const OverviewTab = () => {
         <div className="filter-group">
           <label className="filter-label">Khoảng thời gian</label>
           <div className="metric-toggle">
-            <button
-              className={`toggle-btn ${timePreset === '7d' ? 'active' : ''}`}
-              onClick={() => setTimePreset('7d')}
-            >
-              7 ngày gần nhất
-            </button>
-            <button
-              className={`toggle-btn ${timePreset === '30d' ? 'active' : ''}`}
-              onClick={() => setTimePreset('30d')}
-            >
-              30 ngày
-            </button>
-            <button
-              className={`toggle-btn ${timePreset === '90d' ? 'active' : ''}`}
-              onClick={() => setTimePreset('90d')}
-            >
-              90 ngày
-            </button>
-            <button
-              className={`toggle-btn ${timePreset === 'all' ? 'active' : ''}`}
-              onClick={() => setTimePreset('all')}
-            >
-              Tất cả
-            </button>
-            <button
-              className={`toggle-btn ${timePreset === 'custom' ? 'active' : ''}`}
-              onClick={() => setTimePreset('custom')}
-            >
-              Tùy chỉnh
-            </button>
+            <button className={`toggle-btn ${timePreset === '7d' ? 'active' : ''}`} onClick={() => setTimePreset('7d')}>7 ngày</button>
+            <button className={`toggle-btn ${timePreset === '30d' ? 'active' : ''}`} onClick={() => setTimePreset('30d')}>30 ngày</button>
+            <button className={`toggle-btn ${timePreset === '90d' ? 'active' : ''}`} onClick={() => setTimePreset('90d')}>90 ngày</button>
+            <button className={`toggle-btn ${timePreset === 'all' ? 'active' : ''}`} onClick={() => setTimePreset('all')}>Tất cả</button>
+            <button className={`toggle-btn ${timePreset === 'custom' ? 'active' : ''}`} onClick={() => setTimePreset('custom')}>Tùy chỉnh</button>
           </div>
         </div>
 
