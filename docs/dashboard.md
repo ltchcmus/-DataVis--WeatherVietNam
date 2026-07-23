@@ -108,16 +108,10 @@ AQI
 
 → rất đẹp và nhiều thông tin
 
-Scatter Plot
-Humidity
-
-vs
-
-Temperature
-
-Color
-
-Province
+Radar Chart (Climate Profile)
+- So sánh trực tiếp 1 hoặc 2 tỉnh tự chọn
+- Trục quay: Temp, Rain, Humidity, Wind, AQI
+- Dữ liệu chuẩn hóa theo khoảng min-max để hiển thị trực quan khí hậu của tỉnh
 Ranking Table
 
 Province
