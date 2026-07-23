@@ -9,29 +9,35 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   Cell,
+  BarChart,
+  Bar,
+  LabelList,
 } from 'recharts';
 import {
   Activity,
+  BarChart3,
+  CloudRain,
+  Droplets,
   Filter,
   Gauge,
   Network,
   Sparkles,
+  ThermometerSun,
+  Wind,
 } from 'lucide-react';
 import useWeatherData from '../../hooks/useWeatherData';
 
 const METRICS = [
-  { key: 'temperature_max', label: 'T. Max', fullLabel: 'Nhiệt độ tối đa', unit: '°C' },
-  { key: 'temperature_min', label: 'T. Min', fullLabel: 'Nhiệt độ tối thiểu', unit: '°C' },
-  { key: 'temperature_mean', label: 'T. Mean', fullLabel: 'Nhiệt độ trung bình', unit: '°C' },
-  { key: 'rain_sum', label: 'Rain', fullLabel: 'Lượng mưa', unit: 'mm' },
-  { key: 'humidity_mean', label: 'Humidity', fullLabel: 'Độ ẩm', unit: '%' },
-  { key: 'wind_speed_max', label: 'Wind', fullLabel: 'Gió tối đa', unit: 'km/h' },
-  { key: 'aqi', label: 'AQI', fullLabel: 'Chỉ số AQI', unit: '' },
-  { key: 'cloud_cover_mean', label: 'Cloud', fullLabel: 'Độ che phủ mây', unit: '%' },
+  { key: 'temperature_mean', label: 'Nhiệt độ', shortLabel: 'Temp', fullLabel: 'Nhiệt độ trung bình', unit: '°C', icon: ThermometerSun },
+  { key: 'rain_sum', label: 'Lượng mưa', shortLabel: 'Rain', fullLabel: 'Lượng mưa', unit: 'mm', icon: CloudRain },
+  { key: 'humidity_mean', label: 'Độ ẩm', shortLabel: 'Humidity', fullLabel: 'Độ ẩm', unit: '%', icon: Droplets },
+  { key: 'wind_speed_max', label: 'Gió tối đa', shortLabel: 'Wind', fullLabel: 'Tốc độ gió tối đa', unit: 'km/h', icon: Wind },
+  { key: 'cloud_cover_mean', label: 'Mây che phủ', shortLabel: 'Cloud', fullLabel: 'Độ che phủ mây', unit: '%', icon: Network },
+  { key: 'aqi', label: 'AQI', shortLabel: 'AQI', fullLabel: 'Chỉ số AQI', unit: '', icon: Gauge },
 ];
 
+const AQI_FACTORS = METRICS.filter(metric => metric.key !== 'aqi');
 const METRIC_BY_KEY = Object.fromEntries(METRICS.map(metric => [metric.key, metric]));
-const TEMP_KEYS = new Set(['temperature_max', 'temperature_min', 'temperature_mean']);
 const NOTABLE_CORRELATION = 0.4;
 
 function toFiniteNumber(value) {
@@ -44,6 +50,23 @@ function formatValue(value, unit = '', digits = 1) {
   const number = toFiniteNumber(value);
   if (number === null) return 'N/A';
   return `${number.toFixed(digits)}${unit}`;
+}
+
+function average(rows, key) {
+  const values = rows.map(row => toFiniteNumber(row[key])).filter(value => value !== null);
+  if (!values.length) return 0;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function quantile(values, q) {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const position = (sorted.length - 1) * q;
+  const base = Math.floor(position);
+  const rest = position - base;
+  return sorted[base + 1] === undefined
+    ? sorted[base]
+    : sorted[base] + rest * (sorted[base + 1] - sorted[base]);
 }
 
 function pearsonCorrelation(rows, xKey, yKey) {
@@ -91,18 +114,6 @@ function compactRelation(value) {
   return `${correlationDirection(value)} · ${correlationStrength(value)}`;
 }
 
-function pairLabel(pair) {
-  if (!pair) return 'Chưa có dữ liệu';
-  return `${pair.left.label} ↔ ${pair.right.label}`;
-}
-
-function pairDescription(pair) {
-  if (!pair) return 'Không đủ dữ liệu để đánh giá.';
-  const direction = correlationDirection(pair.value).toLowerCase();
-  const strength = correlationStrength(pair.value).toLowerCase();
-  return `${pair.left.fullLabel} và ${pair.right.fullLabel} có tương quan ${direction} ${strength}.`;
-}
-
 function heatColor(value) {
   const t = Math.max(-1, Math.min(1, value));
   if (t >= 0) {
@@ -117,23 +128,238 @@ function heatTextColor(value) {
   return Math.abs(value) >= 0.58 ? '#ffffff' : '#0f172a';
 }
 
-function humidityColor(value) {
-  const humidity = Math.max(0, Math.min(100, Number(value) || 0));
-  const hue = 212 - humidity * 0.9;
-  return `hsl(${hue} 72% 50%)`;
+function aqiColor(value) {
+  const aqi = Number(value) || 0;
+  if (aqi <= 50) return '#10B981';
+  if (aqi <= 100) return '#FBBF24';
+  if (aqi <= 150) return '#F97316';
+  if (aqi <= 200) return '#EF4444';
+  return '#8B5CF6';
 }
 
-function sampleRows(rows, maxPoints = 900) {
+function aqiLabel(value) {
+  const aqi = Number(value) || 0;
+  if (aqi <= 50) return 'Tốt';
+  if (aqi <= 100) return 'Vừa phải';
+  if (aqi <= 150) return 'Nhạy cảm';
+  if (aqi <= 200) return 'Không khỏe';
+  return 'Rất kém';
+}
+
+function sampleRows(rows, maxPoints = 650) {
   if (rows.length <= maxPoints) return rows;
   const step = rows.length / maxPoints;
   return Array.from({ length: maxPoints }, (_, index) => rows[Math.floor(index * step)]);
 }
 
-function ScatterTooltip({ active, payload, xKey, yKey }) {
+function getNiceStep(span, targetTickCount = 6) {
+  if (!Number.isFinite(span) || span <= 0) return 1;
+
+  const roughStep = span / Math.max(2, targetTickCount - 1);
+  const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+  const normalized = roughStep / magnitude;
+
+  let niceFactor = 1;
+  if (normalized > 5) niceFactor = 10;
+  else if (normalized > 2) niceFactor = 5;
+  else if (normalized > 1) niceFactor = 2;
+
+  return niceFactor * magnitude;
+}
+
+function decimalPlacesForStep(step) {
+  if (!Number.isFinite(step) || step >= 1) return 0;
+  return Math.min(4, Math.max(0, Math.ceil(-Math.log10(step))));
+}
+
+function roundSafely(value, digits = 6) {
+  return Number(Number(value).toFixed(digits));
+}
+
+function formatAxisTick(value, key) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return value;
+
+  if (key === 'aqi' || key === 'humidity_mean' || key === 'cloud_cover_mean') {
+    return `${Math.round(number)}`;
+  }
+
+  return `${roundSafely(number, 1)}`;
+}
+
+function getPaddedDomain(rows, key, options = {}) {
+  const {
+    paddingRatio = 0.08,
+    minPadding = 1,
+    clampMin = null,
+    clampMax = null,
+    targetTickCount = 6,
+  } = options;
+
+  const values = rows
+    .map(row => toFiniteNumber(row[key]))
+    .filter(value => value !== null);
+
+  if (!values.length) return ['auto', 'auto'];
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min;
+  const padding = span === 0
+    ? Math.max(Math.abs(min) * 0.06, minPadding)
+    : Math.max(span * paddingRatio, minPadding);
+
+  let lower = min - padding;
+  let upper = max + padding;
+
+  if (clampMin !== null) lower = Math.max(clampMin, lower);
+  if (clampMax !== null) upper = Math.min(clampMax, upper);
+
+  if (lower === upper) upper = lower + minPadding;
+
+  const step = getNiceStep(upper - lower, targetTickCount);
+  const digits = decimalPlacesForStep(step);
+
+  lower = Math.floor((lower + Number.EPSILON) / step) * step;
+  upper = Math.ceil((upper - Number.EPSILON) / step) * step;
+
+  if (clampMin !== null) lower = Math.max(clampMin, lower);
+  if (clampMax !== null) upper = Math.min(clampMax, upper);
+  if (lower === upper) upper = lower + step;
+
+  return [roundSafely(lower, digits), roundSafely(upper, digits)];
+}
+
+function CorrelationHeatmap({ matrix, animationKey }) {
+  const cellSize = 44;
+  const labelWidth = 78;
+  const topLabelHeight = 66;
+  const width = labelWidth + cellSize * METRICS.length + 14;
+  const height = topLabelHeight + cellSize * METRICS.length + 10;
+
+  return (
+    <div className="aqi-heatmap-scroll">
+      <svg
+        key={animationKey}
+        viewBox={`0 0 ${width} ${height}`}
+        className="aqi-heatmap-svg"
+        role="img"
+        aria-label="Ma trận tương quan giữa AQI và các yếu tố thời tiết"
+      >
+        {METRICS.map((metric, columnIndex) => {
+          const x = labelWidth + columnIndex * cellSize + cellSize / 2;
+          return (
+            <text
+              key={`column-${metric.key}`}
+              x={x}
+              y={topLabelHeight - 9}
+              textAnchor="start"
+              transform={`rotate(-42 ${x} ${topLabelHeight - 9})`}
+              className="aqi-heat-label"
+              style={{ animationDelay: `${columnIndex * 28}ms` }}
+            >
+              {metric.shortLabel}
+            </text>
+          );
+        })}
+
+        {METRICS.map((rowMetric, rowIndex) => {
+          const y = topLabelHeight + rowIndex * cellSize;
+          return (
+            <g key={rowMetric.key}>
+              <text
+                x={labelWidth - 7}
+                y={y + cellSize / 2 + 3}
+                textAnchor="end"
+                className="aqi-heat-label"
+                style={{ animationDelay: `${rowIndex * 28}ms` }}
+              >
+                {rowMetric.shortLabel}
+              </text>
+
+              {METRICS.map((columnMetric, columnIndex) => {
+                const item = matrix[rowIndex][columnIndex];
+                const x = labelWidth + columnIndex * cellSize;
+                const delay = 80 + (rowIndex * METRICS.length + columnIndex) * 18;
+                return (
+                  <g
+                    key={`${rowMetric.key}-${columnMetric.key}`}
+                    tabIndex="0"
+                    className="aqi-heat-cell"
+                    style={{ animationDelay: `${delay}ms` }}
+                  >
+                    <title>{`${rowMetric.fullLabel} × ${columnMetric.fullLabel}: r = ${item.value.toFixed(3)}`}</title>
+                    <rect
+                      x={x + 1.5}
+                      y={y + 1.5}
+                      width={cellSize - 3}
+                      height={cellSize - 3}
+                      rx="6"
+                      fill={heatColor(item.value)}
+                      stroke="#ffffff"
+                      strokeWidth="1.5"
+                    />
+                    <text
+                      x={x + cellSize / 2}
+                      y={y + cellSize / 2 + 3.5}
+                      textAnchor="middle"
+                      style={{ fontSize: 10, fontWeight: 800, fill: heatTextColor(item.value) }}
+                    >
+                      {item.value.toFixed(2)}
+                    </text>
+                  </g>
+                );
+              })}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function CorrelationRankingTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const item = payload[0].payload;
+  return (
+    <div className="viz-tooltip province-tooltip">
+      <div className="viz-tooltip-header">
+        <span className="viz-tooltip-label">{item.fullLabel} ↔ AQI</span>
+      </div>
+      <div className="viz-tooltip-divider" />
+      <div className="viz-tooltip-body">
+        <div className="viz-tooltip-row">
+          <span className="viz-tooltip-metric">Hệ số Pearson</span>
+          <span className="viz-tooltip-value">r = {item.correlation.toFixed(3)}</span>
+        </div>
+        <div className="viz-tooltip-row">
+          <span className="viz-tooltip-metric">Diễn giải</span>
+          <span className="viz-tooltip-value">{compactRelation(item.correlation)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CorrelationBarLabel({ x, y, width, height, payload }) {
+  if (!payload) return null;
+  return (
+    <text
+      x={x + width + 8}
+      y={y + height / 2 + 4}
+      fill="#334155"
+      fontSize="11"
+      fontWeight="700"
+    >
+      r = {payload.correlation.toFixed(2)}
+    </text>
+  );
+}
+
+function ScatterTooltip({ active, payload, xKey }) {
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
   const xMetric = METRIC_BY_KEY[xKey];
-  const yMetric = METRIC_BY_KEY[yKey];
 
   return (
     <div className="viz-tooltip province-tooltip">
@@ -151,8 +377,8 @@ function ScatterTooltip({ active, payload, xKey, yKey }) {
           <span className="viz-tooltip-value">{formatValue(item[xKey], xMetric.unit)}</span>
         </div>
         <div className="viz-tooltip-row">
-          <span className="viz-tooltip-metric">{yMetric.fullLabel}</span>
-          <span className="viz-tooltip-value">{formatValue(item[yKey], yMetric.unit, yKey === 'aqi' ? 0 : 1)}</span>
+          <span className="viz-tooltip-metric">AQI</span>
+          <span className="viz-tooltip-value">{formatValue(item.aqi, '', 0)} · {aqiLabel(item.aqi)}</span>
         </div>
       </div>
     </div>
@@ -171,192 +397,17 @@ function BubbleTooltip({ active, payload }) {
       <div className="viz-tooltip-divider" />
       <div className="viz-tooltip-body">
         <div className="viz-tooltip-row">
-          <span className="viz-tooltip-metric">Ngày</span>
-          <span className="viz-tooltip-value">{item.date || 'N/A'}</span>
+          <span className="viz-tooltip-metric">Ngày / AQI</span>
+          <span className="viz-tooltip-value">{item.date || 'N/A'} · {formatValue(item.aqi, '', 0)} ({aqiLabel(item.aqi)})</span>
         </div>
         <div className="viz-tooltip-row">
-          <span className="viz-tooltip-metric">Nhiệt độ / AQI</span>
-          <span className="viz-tooltip-value">
-            {formatValue(item.temperature_mean, '°C')} · AQI {formatValue(item.aqi, '', 0)}
-          </span>
+          <span className="viz-tooltip-metric">Nhiệt độ / Độ ẩm</span>
+          <span className="viz-tooltip-value">{formatValue(item.temperature_mean, '°C')} · {formatValue(item.humidity_mean, '%', 0)}</span>
         </div>
         <div className="viz-tooltip-row">
-          <span className="viz-tooltip-metric">Mưa / Độ ẩm</span>
-          <span className="viz-tooltip-value">
-            {formatValue(item.rain_sum, ' mm')} · {formatValue(item.humidity_mean, '%', 0)}
-          </span>
+          <span className="viz-tooltip-metric">Mưa / Gió</span>
+          <span className="viz-tooltip-value">{formatValue(item.rain_sum, ' mm')} · {formatValue(item.wind_speed_max, ' km/h')}</span>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function CorrelationHeatmap({ matrix, animationKey }) {
-  if (!matrix.length) {
-    return <div className="overview-empty"><p>Không đủ dữ liệu để tính ma trận tương quan.</p></div>;
-  }
-
-  const cellSize = 42;
-  const labelWidth = 82;
-  const topLabelHeight = 66;
-  const width = labelWidth + cellSize * METRICS.length + 14;
-  const height = topLabelHeight + cellSize * METRICS.length + 12;
-
-  return (
-    <div className="relationship-heatmap-scroll">
-      <svg
-        key={animationKey}
-        viewBox={`0 0 ${width} ${height}`}
-        className="relationship-heatmap-svg"
-        role="img"
-        aria-label="Ma trận tương quan Pearson giữa các yếu tố thời tiết"
-      >
-        {METRICS.map((metric, columnIndex) => {
-          const x = labelWidth + columnIndex * cellSize + cellSize / 2;
-          return (
-            <text
-              key={`column-${metric.key}`}
-              x={x}
-              y={topLabelHeight - 9}
-              textAnchor="start"
-              transform={`rotate(-42 ${x} ${topLabelHeight - 9})`}
-              className="relationship-heat-label relationship-heat-label-column"
-              style={{ animationDelay: `${columnIndex * 24}ms` }}
-            >
-              {metric.label}
-            </text>
-          );
-        })}
-
-        {METRICS.map((rowMetric, rowIndex) => {
-          const y = topLabelHeight + rowIndex * cellSize;
-          return (
-            <g key={rowMetric.key}>
-              <text
-                x={labelWidth - 7}
-                y={y + cellSize / 2 + 3}
-                textAnchor="end"
-                className="relationship-heat-label"
-                style={{ animationDelay: `${rowIndex * 28}ms` }}
-              >
-                {rowMetric.label}
-              </text>
-
-              {METRICS.map((columnMetric, columnIndex) => {
-                const item = matrix[rowIndex][columnIndex];
-                const x = labelWidth + columnIndex * cellSize;
-                const delay = 80 + (rowIndex * METRICS.length + columnIndex) * 12;
-                return (
-                  <g
-                    key={`${rowMetric.key}-${columnMetric.key}`}
-                    tabIndex="0"
-                    className="relationship-heat-cell"
-                    style={{ animationDelay: `${delay}ms` }}
-                  >
-                    <title>{`${rowMetric.fullLabel} × ${columnMetric.fullLabel}: r = ${item.value.toFixed(3)}`}</title>
-                    <rect
-                      x={x + 1.5}
-                      y={y + 1.5}
-                      width={cellSize - 3}
-                      height={cellSize - 3}
-                      rx="5"
-                      fill={heatColor(item.value)}
-                      stroke="#ffffff"
-                      strokeWidth="1.5"
-                    />
-                    <text
-                      x={x + cellSize / 2}
-                      y={y + cellSize / 2 + 3.5}
-                      textAnchor="middle"
-                      style={{ fontSize: 9.6, fontWeight: 800, fill: heatTextColor(item.value) }}
-                    >
-                      {item.value.toFixed(2)}
-                    </text>
-                  </g>
-                );
-              })}
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
-function RelationshipScatter({ data, xKey, yKey, color, title, badge, animationKey }) {
-  const xMetric = METRIC_BY_KEY[xKey];
-  const yMetric = METRIC_BY_KEY[yKey];
-
-  return (
-    <figure className="chart-card relationship-scatter-card relationship-enter-card">
-      <div className="chart-card-header relationship-card-header">
-        <div className="chart-title-flex">
-          <Activity size={17} color={color} />
-          <h3 className="chart-card-title m-0">{title}</h3>
-        </div>
-        <span className="chart-subtitle-badge">{badge}</span>
-      </div>
-      <div className="relationship-scatter-frame">
-        <ResponsiveContainer>
-          <ScatterChart margin={{ top: 6, right: 16, bottom: 20, left: 0 }}>
-            <CartesianGrid stroke="#E2E8F0" vertical={false} strokeDasharray="3 3" />
-            <XAxis
-              type="number"
-              dataKey={xKey}
-              name={xMetric.fullLabel}
-              unit={xMetric.unit}
-              tick={{ fontSize: 10.5, fill: '#64748B' }}
-              axisLine={{ stroke: '#CBD5E1' }}
-              label={{
-                value: `${xMetric.fullLabel} (${xMetric.unit || 'điểm'})`,
-                position: 'insideBottom',
-                offset: -11,
-                fill: '#64748B',
-                fontSize: 10,
-              }}
-            />
-            <YAxis
-              type="number"
-              dataKey={yKey}
-              name={yMetric.fullLabel}
-              unit={yMetric.unit}
-              tick={{ fontSize: 10.5, fill: '#64748B' }}
-              axisLine={{ stroke: '#CBD5E1' }}
-              width={40}
-            />
-            <RechartsTooltip
-              content={<ScatterTooltip xKey={xKey} yKey={yKey} />}
-              cursor={{ stroke: '#94A3B8', strokeWidth: 1, strokeDasharray: '4 4' }}
-            />
-            <Scatter
-              key={`${animationKey}-${xKey}-${yKey}`}
-              data={data}
-              fill={color}
-              fillOpacity={0.58}
-              stroke="#ffffff"
-              strokeWidth={1.2}
-              isAnimationActive
-              animationBegin={120}
-              animationDuration={900}
-              animationEasing="ease-out"
-            />
-          </ScatterChart>
-        </ResponsiveContainer>
-      </div>
-    </figure>
-  );
-}
-
-function InsightRow({ pair, index }) {
-  return (
-    <div className="relationship-insight-row" style={{ animationDelay: `${180 + index * 90}ms` }}>
-      <div className="relationship-insight-rank">{index + 1}</div>
-      <div className="relationship-insight-copy">
-        <div className="relationship-insight-line">
-          <span>{pairLabel(pair)}</span>
-          <strong>r = {pair.value.toFixed(2)}</strong>
-        </div>
-        <p>{pairDescription(pair)}</p>
       </div>
     </div>
   );
@@ -368,6 +419,7 @@ const RelationshipAnalysisTab = () => {
   const [timePreset, setTimePreset] = useState('all');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [selectedFactor, setSelectedFactor] = useState('humidity_mean');
 
   const filteredRows = useMemo(() => {
     let rows = data.filter(row => METRICS.every(metric => toFiniteNumber(row[metric.key]) !== null));
@@ -398,36 +450,36 @@ const RelationshipAnalysisTab = () => {
     })))
   ), [filteredRows]);
 
-  const correlationInsights = useMemo(() => {
+  const factorRanking = useMemo(() => (
+    AQI_FACTORS
+      .map(metric => {
+        const correlation = pearsonCorrelation(filteredRows, metric.key, 'aqi');
+        return {
+          ...metric,
+          correlation,
+          absCorrelation: Math.abs(correlation),
+        };
+      })
+      .sort((a, b) => b.absCorrelation - a.absCorrelation)
+  ), [filteredRows]);
+
+  const strongestFactor = factorRanking[0] || null;
+  const notableFactors = factorRanking.filter(item => item.absCorrelation >= NOTABLE_CORRELATION);
+  const selectedMetric = METRIC_BY_KEY[selectedFactor];
+  const selectedCorrelation = factorRanking.find(item => item.key === selectedFactor)?.correlation || 0;
+
+  const highAqiProfile = useMemo(() => {
     if (!filteredRows.length) return null;
-
-    const pairs = [];
-    METRICS.forEach((left, leftIndex) => {
-      METRICS.slice(leftIndex + 1).forEach(right => {
-        pairs.push({ left, right, value: pearsonCorrelation(filteredRows, left.key, right.key) });
-      });
-    });
-
-    const usefulPairs = pairs
-      .filter(pair => !(TEMP_KEYS.has(pair.left.key) && TEMP_KEYS.has(pair.right.key)))
-      .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
-
-    const strongestAqi = usefulPairs
-      .filter(pair => pair.left.key === 'aqi' || pair.right.key === 'aqi')
-      .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))[0];
-
-    const notablePairs = usefulPairs
-      .filter(pair => Math.abs(pair.value) >= NOTABLE_CORRELATION)
-      .slice(0, 3);
-
+    const threshold = quantile(filteredRows.map(row => row.aqi), 0.75);
+    const highRows = filteredRows.filter(row => row.aqi >= threshold);
     return {
-      strongestMeaningful: usefulPairs[0],
-      strongestAqi,
-      notablePairs,
-      notableCount: usefulPairs.filter(pair => Math.abs(pair.value) >= NOTABLE_CORRELATION).length,
-      usefulPairCount: usefulPairs.length,
-      humidityAqi: pearsonCorrelation(filteredRows, 'humidity_mean', 'aqi'),
-      rainAqi: pearsonCorrelation(filteredRows, 'rain_sum', 'aqi'),
+      threshold,
+      count: highRows.length,
+      temperature: average(highRows, 'temperature_mean'),
+      humidity: average(highRows, 'humidity_mean'),
+      rain: average(highRows, 'rain_sum'),
+      wind: average(highRows, 'wind_speed_max'),
+      cloud: average(highRows, 'cloud_cover_mean'),
     };
   }, [filteredRows]);
 
@@ -442,51 +494,103 @@ const RelationshipAnalysisTab = () => {
     return min === max ? [48, 105] : [36, 170];
   }, [bubbleRows]);
 
-  const animationKey = `${provinceScope}-${timePreset}-${customStart}-${customEnd}-${filteredRows.length}`;
+  const dataAnimationKey = `${provinceScope}-${timePreset}-${customStart}-${customEnd}-${filteredRows.length}`;
+  const scatterAnimationKey = `${dataAnimationKey}-${selectedFactor}`;
+
+  const selectedXDomain = useMemo(() => (
+    getPaddedDomain(scatterRows, selectedFactor, {
+      paddingRatio: 0.08,
+      minPadding: selectedFactor === 'rain_sum' ? 0.5 : 1,
+      clampMin: ['rain_sum', 'humidity_mean', 'wind_speed_max', 'cloud_cover_mean'].includes(selectedFactor) ? 0 : null,
+      clampMax: ['humidity_mean', 'cloud_cover_mean'].includes(selectedFactor) ? 100 : null,
+    })
+  ), [scatterRows, selectedFactor]);
+
+  const scatterAqiDomain = useMemo(() => (
+    getPaddedDomain(scatterRows, 'aqi', { paddingRatio: 0.08, minPadding: 5, clampMin: 0 })
+  ), [scatterRows]);
+
+  const bubbleTempDomain = useMemo(() => (
+    getPaddedDomain(bubbleRows, 'temperature_mean', { paddingRatio: 0.08, minPadding: 1 })
+  ), [bubbleRows]);
+
+  const bubbleHumidityDomain = useMemo(() => (
+    getPaddedDomain(bubbleRows, 'humidity_mean', { paddingRatio: 0.06, minPadding: 2, clampMin: 0, clampMax: 100 })
+  ), [bubbleRows]);
 
   const resetAllFilters = () => {
     setProvinceScope('all');
     setTimePreset('all');
     setCustomStart('');
     setCustomEnd('');
+    setSelectedFactor('humidity_mean');
   };
 
-  if (loading) return <div className="overview-empty"><p>Đang tải dữ liệu phân tích mối quan hệ...</p></div>;
+  if (loading) return <div className="overview-empty"><p>Đang tải dữ liệu phân tích AQI...</p></div>;
   if (error) return <div className="overview-empty"><p>Lỗi: {error}</p></div>;
 
-  const strongestAqiMetric = correlationInsights?.strongestAqi
-    ? (correlationInsights.strongestAqi.left.key === 'aqi'
-      ? correlationInsights.strongestAqi.right
-      : correlationInsights.strongestAqi.left)
-    : null;
-
   return (
-    <div className="relationship-analysis-tab">
+    <div className="aqi-relationship-tab">
       <style>{`
-        @keyframes relationshipTabEnter {
+        @keyframes aqiTabEnter {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes relationshipCardEnter {
+        @keyframes aqiCardEnter {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes relationshipHeatCellEnter {
+        @keyframes aqiHeatCellEnter {
           from { opacity: 0; transform: scale(0.72); transform-origin: center; }
           to { opacity: 1; transform: scale(1); transform-origin: center; }
         }
-        @keyframes relationshipLabelEnter {
+        @keyframes aqiLabelEnter {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        .relationship-analysis-tab {
+        .aqi-relationship-tab {
           display: flex;
           flex-direction: column;
           gap: 14px;
           isolation: isolate;
-          animation: relationshipTabEnter 420ms ease-out both;
+          animation: aqiTabEnter 420ms ease-out both;
         }
-        .relationship-filter-bar {
+        .aqi-goal-strip {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+          padding: 13px 15px;
+          border-radius: 12px;
+          border: 1px solid #dbeafe;
+          background: linear-gradient(135deg, #eff6ff 0%, #ffffff 75%);
+          animation: aqiCardEnter 440ms 20ms ease-out both;
+        }
+        .aqi-goal-copy h2 {
+          margin: 0;
+          color: #0f172a;
+          font-size: 1rem;
+          line-height: 1.3;
+        }
+        .aqi-goal-copy p {
+          margin: 4px 0 0;
+          color: #64748b;
+          font-size: 11.5px;
+          line-height: 1.5;
+        }
+        .aqi-goal-badge {
+          flex: 0 0 auto;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 7px 10px;
+          border-radius: 999px;
+          color: #1d4ed8;
+          background: #dbeafe;
+          font-size: 11px;
+          font-weight: 800;
+        }
+        .aqi-filter-bar {
           display: flex;
           flex-wrap: wrap;
           align-items: flex-end;
@@ -496,21 +600,21 @@ const RelationshipAnalysisTab = () => {
           border: 1px solid #e2e8f0;
           border-radius: 12px;
           box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-          animation: relationshipCardEnter 460ms 30ms ease-out both;
+          animation: aqiCardEnter 460ms 55ms ease-out both;
         }
-        .relationship-filter-actions {
+        .aqi-filter-actions {
           margin-left: auto;
           display: flex;
           align-items: center;
           gap: 10px;
         }
-        .relationship-summary-grid {
+        .aqi-summary-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 12px;
         }
-        .relationship-summary-card {
-          min-height: 72px;
+        .aqi-summary-card {
+          min-height: 76px;
           padding: 10px 13px;
           display: flex;
           align-items: center;
@@ -519,12 +623,12 @@ const RelationshipAnalysisTab = () => {
           border: 1px solid #e2e8f0;
           border-radius: 12px;
           box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-          animation: relationshipCardEnter 480ms ease-out both;
+          animation: aqiCardEnter 480ms ease-out both;
         }
-        .relationship-summary-card:nth-child(1) { animation-delay: 70ms; }
-        .relationship-summary-card:nth-child(2) { animation-delay: 130ms; }
-        .relationship-summary-card:nth-child(3) { animation-delay: 190ms; }
-        .relationship-summary-icon {
+        .aqi-summary-card:nth-child(1) { animation-delay: 90ms; }
+        .aqi-summary-card:nth-child(2) { animation-delay: 145ms; }
+        .aqi-summary-card:nth-child(3) { animation-delay: 200ms; }
+        .aqi-summary-icon {
           width: 34px;
           height: 34px;
           border-radius: 9px;
@@ -534,27 +638,25 @@ const RelationshipAnalysisTab = () => {
           color: #2563eb;
           background: rgba(37, 99, 235, 0.09);
         }
-        .relationship-summary-copy {
-          min-width: 0;
-        }
-        .relationship-summary-label {
+        .aqi-summary-copy { min-width: 0; }
+        .aqi-summary-label {
           display: block;
           color: #64748b;
           font-size: 11px;
           font-weight: 700;
           margin-bottom: 2px;
         }
-        .relationship-summary-value {
+        .aqi-summary-value {
           display: block;
           color: #0f172a;
-          font-size: 1.05rem;
-          line-height: 1.18;
+          font-size: 1.04rem;
+          line-height: 1.2;
           font-weight: 800;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        .relationship-summary-note {
+        .aqi-summary-note {
           display: block;
           color: #64748b;
           font-size: 10.5px;
@@ -563,222 +665,180 @@ const RelationshipAnalysisTab = () => {
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        .relationship-primary-grid {
+        .aqi-primary-grid {
           display: grid;
-          grid-template-columns: minmax(0, 1.34fr) minmax(280px, 0.66fr);
+          grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
           gap: 14px;
-          align-items: start;
-          position: relative;
-          z-index: 2;
+          align-items: stretch;
         }
-        .relationship-primary-grid > .chart-card {
+        .aqi-primary-grid > .chart-card,
+        .aqi-scatter-card,
+        .aqi-bubble-card {
           margin: 0;
-          position: relative;
           overflow: hidden;
-          animation: relationshipCardEnter 520ms 210ms ease-out both;
+          animation: aqiCardEnter 520ms 230ms ease-out both;
         }
-        .relationship-card-header {
+        .aqi-card-header {
           min-height: 34px;
           margin-bottom: 6px;
         }
-        .relationship-heatmap-scroll {
+        .aqi-ranking-frame {
+          width: 100%;
+          height: 300px;
+        }
+        .aqi-heatmap-scroll {
           width: 100%;
           overflow-x: auto;
           display: flex;
           justify-content: center;
-          padding: 0;
         }
-        .relationship-heatmap-svg {
-          width: min(100%, 505px);
-          min-width: 438px;
+        .aqi-heatmap-svg {
+          width: min(100%, 420px);
+          min-width: 350px;
           display: block;
         }
-        .relationship-heat-cell {
+        .aqi-heat-cell {
           opacity: 0;
-          animation: relationshipHeatCellEnter 360ms ease-out forwards;
+          animation: aqiHeatCellEnter 360ms ease-out forwards;
           transform-box: fill-box;
           transform-origin: center;
         }
-        .relationship-heat-label {
+        .aqi-heat-label {
           opacity: 0;
           font-size: 9px;
           font-weight: 700;
           fill: #475569;
-          animation: relationshipLabelEnter 300ms ease-out forwards;
+          animation: aqiLabelEnter 300ms ease-out forwards;
         }
-        .relationship-heatmap-legend {
+        .aqi-heatmap-legend {
           display: flex;
           flex-wrap: wrap;
           align-items: center;
           gap: 6px 10px;
-          padding-top: 8px;
-          margin-top: 2px;
+          padding-top: 7px;
           border-top: 1px solid #eef2f7;
           color: #64748b;
-          font-size: 10.8px;
+          font-size: 10.7px;
         }
-        .relationship-legend-scale {
-          width: 104px;
+        .aqi-legend-scale {
+          width: 96px;
           height: 7px;
           border-radius: 999px;
           background: linear-gradient(90deg, hsl(215 78% 47%), #f8fafc, hsl(6 78% 47%));
         }
-        .relationship-insight-card {
-          min-height: 0;
+        .aqi-scatter-card {
+          animation-delay: 290ms;
         }
-        .relationship-insight-list {
+        .aqi-scatter-header {
           display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        .relationship-insight-row {
-          display: flex;
-          gap: 9px;
-          padding: 9px 10px;
-          border: 1px solid #eef2f7;
-          border-radius: 9px;
-          background: #fbfdff;
-          opacity: 0;
-          animation: relationshipCardEnter 420ms ease-out forwards;
-        }
-        .relationship-insight-rank {
-          width: 26px;
-          height: 26px;
-          border-radius: 8px;
-          display: grid;
-          place-items: center;
-          flex: 0 0 auto;
-          color: #2563eb;
-          background: #eff6ff;
-          font-size: 11px;
-          font-weight: 800;
-        }
-        .relationship-insight-copy {
-          min-width: 0;
-          flex: 1;
-        }
-        .relationship-insight-line {
-          display: flex;
+          align-items: flex-start;
           justify-content: space-between;
-          gap: 8px;
-          color: #334155;
-          font-size: 11.5px;
-          font-weight: 700;
-        }
-        .relationship-insight-line strong {
-          color: #0f172a;
-          white-space: nowrap;
-        }
-        .relationship-insight-copy p {
-          margin: 2px 0 0;
-          color: #64748b;
-          font-size: 10.7px;
-          line-height: 1.38;
-        }
-        .relationship-no-insight {
-          padding: 14px 12px;
-          border-radius: 10px;
-          border: 1px dashed #cbd5e1;
-          background: #f8fafc;
-          color: #475569;
-          font-size: 11.5px;
-          line-height: 1.55;
-        }
-        .relationship-no-insight strong {
-          display: block;
-          color: #0f172a;
-          margin-bottom: 3px;
-        }
-        .relationship-scatter-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 14px;
-          position: relative;
-          z-index: 1;
-          margin-top: 2px;
-          clear: both;
+          margin-bottom: 6px;
         }
-        .relationship-scatter-card {
-          margin: 0;
-          overflow: hidden;
-        }
-        .relationship-scatter-frame {
-          width: 100%;
-          height: 235px;
-          min-height: 235px;
-        }
-        .relationship-bubble-card {
-          margin: 0;
-          overflow: hidden;
-          animation: relationshipCardEnter 520ms 340ms ease-out both;
-        }
-        .relationship-bubble-frame {
-          width: 100%;
-          height: 285px;
-        }
-        .relationship-bubble-footer {
+        .aqi-factor-toggle {
           display: flex;
           flex-wrap: wrap;
+          justify-content: flex-end;
+          gap: 5px;
+        }
+        .aqi-factor-toggle .toggle-btn {
+          padding: 5px 8px;
+          font-size: 10.5px;
+        }
+        .aqi-scatter-frame {
+          width: 100%;
+          height: 310px;
+        }
+        .aqi-scatter-footer {
+          display: flex;
           align-items: center;
-          gap: 7px 11px;
+          justify-content: space-between;
+          gap: 12px;
           padding-top: 6px;
           color: #64748b;
           font-size: 10.8px;
         }
-        .relationship-bubble-footer .relationship-aqi-insight {
+        .aqi-scatter-footer strong { color: #334155; }
+        .aqi-bubble-card {
+          animation-delay: 350ms;
+        }
+        .aqi-bubble-frame {
+          width: 100%;
+          height: 300px;
+        }
+        .aqi-bubble-footer {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 7px 11px;
+          padding-top: 7px;
+          color: #64748b;
+          font-size: 10.8px;
+        }
+        .aqi-profile-strip {
           margin-left: auto;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 6px;
+        }
+        .aqi-profile-chip {
+          padding: 4px 7px;
+          border-radius: 999px;
           color: #334155;
+          background: #f1f5f9;
           font-weight: 700;
         }
         @media (prefers-reduced-motion: reduce) {
-          .relationship-analysis-tab,
-          .relationship-filter-bar,
-          .relationship-summary-card,
-          .relationship-primary-grid > .chart-card,
-          .relationship-insight-row,
-          .relationship-bubble-card,
-          .relationship-heat-cell,
-          .relationship-heat-label {
+          .aqi-relationship-tab,
+          .aqi-goal-strip,
+          .aqi-filter-bar,
+          .aqi-summary-card,
+          .aqi-primary-grid > .chart-card,
+          .aqi-scatter-card,
+          .aqi-bubble-card,
+          .aqi-heat-cell,
+          .aqi-heat-label {
             animation: none !important;
             opacity: 1 !important;
             transform: none !important;
           }
         }
         @media (max-width: 1100px) {
-          .relationship-primary-grid {
-            grid-template-columns: 1fr;
-          }
-          .relationship-filter-actions {
-            margin-left: 0;
-          }
+          .aqi-primary-grid { grid-template-columns: 1fr; }
+          .aqi-filter-actions { margin-left: 0; }
         }
         @media (max-width: 820px) {
-          .relationship-summary-grid {
-            grid-template-columns: 1fr;
-          }
-          .relationship-scatter-grid {
-            grid-template-columns: 1fr;
-          }
+          .aqi-summary-grid { grid-template-columns: 1fr; }
+          .aqi-scatter-header { flex-direction: column; }
+          .aqi-factor-toggle { justify-content: flex-start; }
+          .aqi-profile-strip { margin-left: 0; justify-content: flex-start; }
         }
         @media (max-width: 760px) {
-          .relationship-filter-bar {
-            align-items: stretch;
-          }
-          .relationship-filter-bar .filter-group {
-            width: 100%;
-          }
-          .relationship-filter-actions {
-            width: 100%;
-            justify-content: space-between;
-          }
+          .aqi-goal-strip { align-items: flex-start; flex-direction: column; }
+          .aqi-filter-bar { align-items: stretch; }
+          .aqi-filter-bar .filter-group { width: 100%; }
+          .aqi-filter-actions { width: 100%; justify-content: space-between; }
         }
       `}</style>
 
-      <div className="relationship-filter-bar">
+      <div className="aqi-goal-strip">
+        <div className="aqi-goal-copy">
+          <h2>Những điều kiện thời tiết nào thường đi kèm chất lượng không khí xấu?</h2>
+          <p>
+            Xác định yếu tố thời tiết có mối liên hệ rõ nhất với AQI và khám phá tổ hợp điều kiện thường xuất hiện cùng mức AQI cao.
+          </p>
+        </div>
+        <span className="aqi-goal-badge"><Sparkles size={14} /> Trọng tâm: AQI</span>
+      </div>
+
+      <div className="aqi-filter-bar">
         <div className="filter-group">
-          <label className="filter-label" htmlFor="relationship-province">Tỉnh / Thành phố</label>
+          <label className="filter-label" htmlFor="aqi-relationship-province">Tỉnh / Thành phố</label>
           <select
-            id="relationship-province"
+            id="aqi-relationship-province"
             className="filter-select"
             value={provinceScope}
             onChange={event => setProvinceScope(event.target.value)}
@@ -806,7 +866,7 @@ const RelationshipAnalysisTab = () => {
           </div>
         )}
 
-        <div className="relationship-filter-actions">
+        <div className="aqi-filter-actions">
           <button type="button" className="toggle-btn" onClick={resetAllFilters}>
             <Filter size={14} /> Xóa lọc
           </button>
@@ -814,136 +874,234 @@ const RelationshipAnalysisTab = () => {
         </div>
       </div>
 
-      {correlationInsights && (
-        <div className="relationship-summary-grid">
-          <div className="relationship-summary-card">
-            <div className="relationship-summary-icon"><Network size={18} /></div>
-            <div className="relationship-summary-copy">
-              <span className="relationship-summary-label">Cặp nổi bật nhất</span>
-              <span className="relationship-summary-value">{pairLabel(correlationInsights.strongestMeaningful)}</span>
-              <span className="relationship-summary-note">
-                r = {correlationInsights.strongestMeaningful?.value.toFixed(2)} · {compactRelation(correlationInsights.strongestMeaningful?.value || 0)}
-              </span>
-            </div>
-          </div>
-
-          <div className="relationship-summary-card">
-            <div className="relationship-summary-icon"><Gauge size={18} /></div>
-            <div className="relationship-summary-copy">
-              <span className="relationship-summary-label">Liên hệ mạnh nhất với AQI</span>
-              <span className="relationship-summary-value">{strongestAqiMetric?.fullLabel || 'Chưa có dữ liệu'}</span>
-              <span className="relationship-summary-note">
-                r = {correlationInsights.strongestAqi?.value.toFixed(2) || '0.00'} · {compactRelation(correlationInsights.strongestAqi?.value || 0)}
-              </span>
-            </div>
-          </div>
-
-          <div className="relationship-summary-card">
-            <div className="relationship-summary-icon"><Sparkles size={18} /></div>
-            <div className="relationship-summary-copy">
-              <span className="relationship-summary-label">Cặp đáng chú ý</span>
-              <span className="relationship-summary-value">{correlationInsights.notableCount} cặp</span>
-              <span className="relationship-summary-note">Ngưỡng |r| ≥ {NOTABLE_CORRELATION.toFixed(2)} trên {correlationInsights.usefulPairCount} cặp hữu ích</span>
-            </div>
+      <div className="aqi-summary-grid">
+        <div className="aqi-summary-card">
+          <div className="aqi-summary-icon"><Gauge size={18} /></div>
+          <div className="aqi-summary-copy">
+            <span className="aqi-summary-label">Liên hệ mạnh nhất với AQI</span>
+            <span className="aqi-summary-value">{strongestFactor?.fullLabel || 'Chưa có dữ liệu'}</span>
+            <span className="aqi-summary-note">
+              r = {strongestFactor?.correlation.toFixed(2) || '0.00'} · {compactRelation(strongestFactor?.correlation || 0)}
+            </span>
           </div>
         </div>
-      )}
 
-      <div className="relationship-primary-grid">
-        <figure className="chart-card relationship-heatmap-card">
-          <div className="chart-card-header relationship-card-header">
+        <div className="aqi-summary-card">
+          <div className="aqi-summary-icon"><BarChart3 size={18} /></div>
+          <div className="aqi-summary-copy">
+            <span className="aqi-summary-label">Yếu tố đáng chú ý</span>
+            <span className="aqi-summary-value">{notableFactors.length} / {AQI_FACTORS.length} yếu tố</span>
+            <span className="aqi-summary-note">Ngưỡng |r| ≥ {NOTABLE_CORRELATION.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div className="aqi-summary-card">
+          <div className="aqi-summary-icon"><Activity size={18} /></div>
+          <div className="aqi-summary-copy">
+            <span className="aqi-summary-label">Nhóm AQI cao</span>
+            <span className="aqi-summary-value">AQI ≥ {highAqiProfile ? highAqiProfile.threshold.toFixed(0) : 'N/A'}</span>
+            <span className="aqi-summary-note">Top 25% · {highAqiProfile?.count || 0} quan sát</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="aqi-primary-grid">
+        <figure className="chart-card">
+          <div className="chart-card-header aqi-card-header">
             <div className="chart-title-flex">
-              <Network size={17} color="#2563EB" />
-              <h3 className="chart-card-title m-0">Ma trận tương quan</h3>
+              <BarChart3 size={17} color="#2563EB" />
+              <h3 className="chart-card-title m-0">Mức liên hệ của các yếu tố với AQI</h3>
             </div>
-            <span className="chart-subtitle-badge">Pearson r: -1 đến +1</span>
+            <span className="chart-subtitle-badge">Xếp hạng theo |r|</span>
           </div>
 
-          <CorrelationHeatmap matrix={correlationMatrix} animationKey={animationKey} />
-
-          <div className="relationship-heatmap-legend">
-            <span style={{ fontWeight: 700, color: '#334155' }}>Nghịch</span>
-            <div className="relationship-legend-scale" />
-            <span style={{ fontWeight: 700, color: '#334155' }}>Thuận</span>
-            <span>Ưu tiên đọc các ô đậm, có |r| từ 0,40 trở lên.</span>
+          <div className="aqi-ranking-frame">
+            <ResponsiveContainer>
+              <BarChart
+                data={factorRanking}
+                layout="vertical"
+                margin={{ top: 8, right: 58, bottom: 8, left: 16 }}
+                barCategoryGap={10}
+              >
+                <CartesianGrid stroke="#E2E8F0" horizontal={false} />
+                <XAxis
+                  type="number"
+                  domain={[0, 1]}
+                  tick={{ fontSize: 10.5, fill: '#64748B' }}
+                  axisLine={{ stroke: '#CBD5E1' }}
+                  tickFormatter={value => value.toFixed(1)}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="label"
+                  width={92}
+                  tick={{ fontSize: 11, fill: '#334155', fontWeight: 700 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <RechartsTooltip content={<CorrelationRankingTooltip />} cursor={{ fill: '#F8FAFC' }} />
+                <Bar
+                  dataKey="absCorrelation"
+                  radius={[0, 5, 5, 0]}
+                  maxBarSize={24}
+                  isAnimationActive
+                  animationBegin={120}
+                  animationDuration={900}
+                  animationEasing="ease-out"
+                >
+                  {factorRanking.map(item => (
+                    <Cell key={item.key} fill={item.correlation >= 0 ? '#EF6A5B' : '#3B82F6'} />
+                  ))}
+                  <LabelList dataKey="absCorrelation" content={<CorrelationBarLabel />} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </figure>
 
-        <aside className="chart-card relationship-insight-card">
-          <div className="chart-card-header relationship-card-header">
+        <figure className="chart-card">
+          <div className="chart-card-header aqi-card-header">
             <div className="chart-title-flex">
-              <Sparkles size={17} color="#8B5CF6" />
-              <h3 className="chart-card-title m-0">Insight nổi bật</h3>
+              <Network size={17} color="#8B5CF6" />
+              <h3 className="chart-card-title m-0">Ma trận tương quan tổng quan</h3>
             </div>
-            <span className="chart-subtitle-badge">|r| ≥ 0,40</span>
+            <span className="chart-subtitle-badge">6 biến cốt lõi</span>
           </div>
 
-          {correlationInsights?.notablePairs.length ? (
-            <div className="relationship-insight-list">
-              {correlationInsights.notablePairs.map((pair, index) => (
-                <InsightRow key={`${pair.left.key}-${pair.right.key}`} pair={pair} index={index} />
-              ))}
-            </div>
-          ) : (
-            <div className="relationship-no-insight">
-              <strong>Chưa có tương quan tuyến tính đáng chú ý</strong>
-              Không có cặp biến ngoài nhóm nhiệt độ đạt |r| ≥ {NOTABLE_CORRELATION.toFixed(2)} theo bộ lọc hiện tại. Đây là một kết quả có ý nghĩa: các biến không thể hiện quan hệ tuyến tính đủ rõ trong lát cắt dữ liệu này.
-            </div>
-          )}
-        </aside>
+          <CorrelationHeatmap matrix={correlationMatrix} animationKey={dataAnimationKey} />
+
+          <div className="aqi-heatmap-legend">
+            <span style={{ fontWeight: 700, color: '#334155' }}>Nghịch</span>
+            <div className="aqi-legend-scale" />
+            <span style={{ fontWeight: 700, color: '#334155' }}>Thuận</span>
+            <span>Ô càng đậm, mối liên hệ càng mạnh.</span>
+          </div>
+        </figure>
       </div>
 
-      <div className="relationship-scatter-grid">
-        <RelationshipScatter
-          data={scatterRows}
-          xKey="humidity_mean"
-          yKey="aqi"
-          color="#0EA5E9"
-          title="AQI và Độ ẩm"
-          badge={`r = ${correlationInsights?.humidityAqi.toFixed(2) || '0.00'}`}
-          animationKey={animationKey}
-        />
-
-        <RelationshipScatter
-          data={scatterRows}
-          xKey="rain_sum"
-          yKey="aqi"
-          color="#3B82F6"
-          title="AQI và Lượng mưa"
-          badge={`r = ${correlationInsights?.rainAqi.toFixed(2) || '0.00'}`}
-          animationKey={animationKey}
-        />
-      </div>
-
-      <figure className="chart-card relationship-bubble-card">
-        <div className="chart-card-header relationship-card-header">
+      <figure className="chart-card aqi-scatter-card">
+        <div className="aqi-scatter-header">
           <div className="chart-title-flex">
-            <Gauge size={17} color="#8B5CF6" />
-            <h3 className="chart-card-title m-0">Nhiệt độ, AQI, Mưa và Độ ẩm</h3>
+            <Activity size={17} color="#0EA5E9" />
+            <div>
+              <h3 className="chart-card-title m-0">Khám phá quan hệ với AQI</h3>
+              <p style={{ margin: '3px 0 0', color: '#64748B', fontSize: 10.8 }}>
+                Chọn một yếu tố để xem phân bố, ngoại lệ và xu hướng tuyến tính.
+              </p>
+            </div>
           </div>
-          <span className="chart-subtitle-badge">X: Nhiệt độ · Y: AQI · Size: Mưa · Color: Độ ẩm</span>
+          <div className="aqi-factor-toggle">
+            {AQI_FACTORS.map(metric => (
+              <button
+                key={metric.key}
+                type="button"
+                className={`toggle-btn ${selectedFactor === metric.key ? 'active' : ''}`}
+                onClick={() => setSelectedFactor(metric.key)}
+              >
+                {metric.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="relationship-bubble-frame">
+        <div className="aqi-scatter-frame">
           <ResponsiveContainer>
-            <ScatterChart margin={{ top: 8, right: 20, bottom: 25, left: 0 }}>
+            <ScatterChart margin={{ top: 8, right: 22, bottom: 28, left: 14 }}>
+              <CartesianGrid stroke="#E2E8F0" vertical={false} strokeDasharray="3 3" />
+              <XAxis
+                type="number"
+                dataKey={selectedFactor}
+                name={selectedMetric.fullLabel}
+                unit={selectedMetric.unit}
+                domain={selectedXDomain}
+                allowDataOverflow={false}
+                tickCount={6}
+                allowDecimals={!['humidity_mean', 'cloud_cover_mean'].includes(selectedFactor)}
+                tickFormatter={value => formatAxisTick(value, selectedFactor)}
+                tick={{ fontSize: 10.5, fill: '#64748B' }}
+                axisLine={{ stroke: '#CBD5E1' }}
+                label={{ value: `${selectedMetric.fullLabel} (${selectedMetric.unit || 'điểm'})`, position: 'insideBottom', offset: -16, fill: '#64748B', fontSize: 10 }}
+              />
+              <YAxis
+                type="number"
+                dataKey="aqi"
+                name="AQI"
+                domain={scatterAqiDomain}
+                allowDataOverflow={false}
+                tickCount={6}
+                allowDecimals={false}
+                tickFormatter={value => formatAxisTick(value, 'aqi')}
+                tick={{ fontSize: 10.5, fill: '#64748B' }}
+                axisLine={{ stroke: '#CBD5E1' }}
+                width={58}
+                label={{ value: 'AQI (điểm)', angle: -90, position: 'insideLeft', offset: 8, fill: '#64748B', fontSize: 10 }}
+              />
+              <RechartsTooltip
+                content={<ScatterTooltip xKey={selectedFactor} />}
+                cursor={{ stroke: '#94A3B8', strokeWidth: 1, strokeDasharray: '4 4' }}
+              />
+              <Scatter
+                key={`${scatterAnimationKey}-scatter`}
+                data={scatterRows}
+                fill="#0EA5E9"
+                fillOpacity={0.58}
+                stroke="#ffffff"
+                strokeWidth={1.2}
+                isAnimationActive
+                animationBegin={120}
+                animationDuration={900}
+                animationEasing="ease-out"
+              />
+            </ScatterChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="aqi-scatter-footer">
+          <span><strong>{selectedMetric.fullLabel} ↔ AQI:</strong> r = {selectedCorrelation.toFixed(2)}</span>
+          <span>{compactRelation(selectedCorrelation)}</span>
+        </div>
+      </figure>
+
+      <figure className="chart-card aqi-bubble-card">
+        <div className="chart-card-header aqi-card-header">
+          <div className="chart-title-flex">
+            <Gauge size={17} color="#8B5CF6" />
+            <h3 className="chart-card-title m-0">Tổ hợp điều kiện thời tiết đi kèm AQI cao</h3>
+          </div>
+          <span className="chart-subtitle-badge">X: Nhiệt độ · Y: Độ ẩm · Size: Mưa · Color: AQI</span>
+        </div>
+
+        <div className="aqi-bubble-frame">
+          <ResponsiveContainer>
+            <ScatterChart margin={{ top: 8, right: 20, bottom: 26, left: 14 }}>
               <CartesianGrid stroke="#E2E8F0" vertical={false} strokeDasharray="3 3" />
               <XAxis
                 type="number"
                 dataKey="temperature_mean"
                 name="Nhiệt độ trung bình"
                 unit="°C"
+                domain={bubbleTempDomain}
+                allowDataOverflow={false}
+                tickCount={6}
+                tickFormatter={value => formatAxisTick(value, 'temperature_mean')}
                 tick={{ fontSize: 10.5, fill: '#64748B' }}
                 axisLine={{ stroke: '#CBD5E1' }}
                 label={{ value: 'Nhiệt độ trung bình (°C)', position: 'insideBottom', offset: -14, fill: '#64748B', fontSize: 10 }}
               />
               <YAxis
                 type="number"
-                dataKey="aqi"
-                name="AQI"
+                dataKey="humidity_mean"
+                name="Độ ẩm"
+                unit="%"
+                domain={bubbleHumidityDomain}
+                allowDataOverflow={false}
+                tickCount={6}
+                allowDecimals={false}
+                tickFormatter={value => formatAxisTick(value, 'humidity_mean')}
                 tick={{ fontSize: 10.5, fill: '#64748B' }}
                 axisLine={{ stroke: '#CBD5E1' }}
-                width={40}
+                width={58}
+                label={{ value: 'Độ ẩm (%)', angle: -90, position: 'insideLeft', offset: 8, fill: '#64748B', fontSize: 10 }}
               />
               <ZAxis type="number" dataKey="rain_sum" name="Lượng mưa" unit="mm" range={rainRange} />
               <RechartsTooltip
@@ -951,9 +1109,9 @@ const RelationshipAnalysisTab = () => {
                 cursor={{ stroke: '#94A3B8', strokeWidth: 1, strokeDasharray: '4 4' }}
               />
               <Scatter
-                key={`${animationKey}-bubble`}
+                key={`${dataAnimationKey}-bubble`}
                 data={bubbleRows}
-                fillOpacity={0.62}
+                fillOpacity={0.7}
                 stroke="#ffffff"
                 strokeWidth={1.2}
                 isAnimationActive
@@ -962,25 +1120,36 @@ const RelationshipAnalysisTab = () => {
                 animationEasing="ease-out"
               >
                 {bubbleRows.map((row, index) => (
-                  <Cell key={`${row.province}-${row.date}-${index}`} fill={humidityColor(row.humidity_mean)} />
+                  <Cell key={`${row.province}-${row.date}-${index}`} fill={aqiColor(row.aqi)} />
                 ))}
               </Scatter>
             </ScatterChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="relationship-bubble-footer">
-          <span style={{ fontWeight: 700, color: '#334155' }}>Màu độ ẩm:</span>
-          {[40, 55, 70, 85, 100].map(value => (
-            <span key={value} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 9, height: 9, borderRadius: '50%', backgroundColor: humidityColor(value) }} />
-              {value}%
+        <div className="aqi-bubble-footer">
+          <span style={{ fontWeight: 700, color: '#334155' }}>Màu AQI:</span>
+          {[
+            { label: 'Tốt', color: '#10B981' },
+            { label: 'Vừa phải', color: '#FBBF24' },
+            { label: 'Nhạy cảm', color: '#F97316' },
+            { label: 'Không khỏe', color: '#EF4444' },
+            { label: 'Rất kém', color: '#8B5CF6' },
+          ].map(item => (
+            <span key={item.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 9, height: 9, borderRadius: '50%', backgroundColor: item.color }} />
+              {item.label}
             </span>
           ))}
-          {strongestAqiMetric && correlationInsights?.strongestAqi && (
-            <span className="relationship-aqi-insight">
-              Liên hệ AQI mạnh nhất: {strongestAqiMetric.label} (r = {correlationInsights.strongestAqi.value.toFixed(2)})
-            </span>
+
+          {highAqiProfile && (
+            <div className="aqi-profile-strip">
+              <span style={{ fontWeight: 700, color: '#334155' }}>Hồ sơ nhóm AQI cao:</span>
+              <span className="aqi-profile-chip">{formatValue(highAqiProfile.temperature, '°C')}</span>
+              <span className="aqi-profile-chip">Ẩm {formatValue(highAqiProfile.humidity, '%', 0)}</span>
+              <span className="aqi-profile-chip">Mưa {formatValue(highAqiProfile.rain, ' mm')}</span>
+              <span className="aqi-profile-chip">Gió {formatValue(highAqiProfile.wind, ' km/h')}</span>
+            </div>
           )}
         </div>
       </figure>
