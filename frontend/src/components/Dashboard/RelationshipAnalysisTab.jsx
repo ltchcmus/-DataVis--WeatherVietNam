@@ -5,7 +5,6 @@ import {
   Scatter,
   XAxis,
   YAxis,
-  ZAxis,
   CartesianGrid,
   Tooltip as RechartsTooltip,
   Cell,
@@ -56,6 +55,38 @@ function average(rows, key) {
   const values = rows.map(row => toFiniteNumber(row[key])).filter(value => value !== null);
   if (!values.length) return 0;
   return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function sampleStandardDeviation(rows, key) {
+  const values = rows.map(row => toFiniteNumber(row[key])).filter(value => value !== null);
+  if (values.length < 2) return 0;
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (values.length - 1);
+  return Math.sqrt(variance);
+}
+
+function pooledStandardDeviation(lowRows, highRows, key) {
+  if (lowRows.length < 2 || highRows.length < 2) return 0;
+  const lowSd = sampleStandardDeviation(lowRows, key);
+  const highSd = sampleStandardDeviation(highRows, key);
+  const denominator = lowRows.length + highRows.length - 2;
+  if (denominator <= 0) return 0;
+  return Math.sqrt(
+    (((lowRows.length - 1) * lowSd ** 2) + ((highRows.length - 1) * highSd ** 2)) / denominator
+  );
+}
+
+function effectSizeStrength(value) {
+  const magnitude = Math.abs(value);
+  if (magnitude >= 0.8) return 'Lớn';
+  if (magnitude >= 0.5) return 'Trung bình';
+  if (magnitude >= 0.2) return 'Nhỏ';
+  return 'Không đáng kể';
+}
+
+function formatSigned(value, digits = 2) {
+  const number = Number(value) || 0;
+  return `${number > 0 ? '+' : ''}${number.toFixed(digits)}`;
 }
 
 function quantile(values, q) {
@@ -128,14 +159,6 @@ function heatTextColor(value) {
   return Math.abs(value) >= 0.58 ? '#ffffff' : '#0f172a';
 }
 
-function aqiColor(value) {
-  const aqi = Number(value) || 0;
-  if (aqi <= 50) return '#10B981';
-  if (aqi <= 100) return '#FBBF24';
-  if (aqi <= 150) return '#F97316';
-  if (aqi <= 200) return '#EF4444';
-  return '#8B5CF6';
-}
 
 function aqiLabel(value) {
   const aqi = Number(value) || 0;
@@ -385,30 +408,128 @@ function ScatterTooltip({ active, payload, xKey }) {
   );
 }
 
-function BubbleTooltip({ active, payload }) {
-  if (!active || !payload?.length) return null;
-  const item = payload[0].payload;
+function AqiGroupEffectChart({ data, animationKey }) {
+  if (!data.length) {
+    return <div className="overview-empty"><p>Không đủ dữ liệu để so sánh hai nhóm AQI.</p></div>;
+  }
+
+  const width = 940;
+  const height = 330;
+  const labelWidth = 132;
+  const detailWidth = 250;
+  const plotLeft = labelWidth;
+  const plotRight = width - detailWidth;
+  const plotWidth = plotRight - plotLeft;
+  const top = 58;
+  const rowGap = 48;
+  const maxAbs = Math.max(0.5, ...data.map(item => Math.abs(item.effectSize)));
+  const step = maxAbs <= 1 ? 0.5 : maxAbs <= 2 ? 1 : 2;
+  const domainMax = Math.ceil(maxAbs / step) * step;
+  const ticks = [];
+  for (let value = -domainMax; value <= domainMax + step / 2; value += step) {
+    ticks.push(roundSafely(value, 2));
+  }
+  const xScale = value => plotLeft + ((value + domainMax) / (domainMax * 2)) * plotWidth;
+  const zeroX = xScale(0);
 
   return (
-    <div className="viz-tooltip province-tooltip">
-      <div className="viz-tooltip-header">
-        <span className="viz-tooltip-label">{item.province || 'Không xác định'}</span>
-      </div>
-      <div className="viz-tooltip-divider" />
-      <div className="viz-tooltip-body">
-        <div className="viz-tooltip-row">
-          <span className="viz-tooltip-metric">Ngày / AQI</span>
-          <span className="viz-tooltip-value">{item.date || 'N/A'} · {formatValue(item.aqi, '', 0)} ({aqiLabel(item.aqi)})</span>
-        </div>
-        <div className="viz-tooltip-row">
-          <span className="viz-tooltip-metric">Nhiệt độ / Độ ẩm</span>
-          <span className="viz-tooltip-value">{formatValue(item.temperature_mean, '°C')} · {formatValue(item.humidity_mean, '%', 0)}</span>
-        </div>
-        <div className="viz-tooltip-row">
-          <span className="viz-tooltip-metric">Mưa / Gió</span>
-          <span className="viz-tooltip-value">{formatValue(item.rain_sum, ' mm')} · {formatValue(item.wind_speed_max, ' km/h')}</span>
-        </div>
-      </div>
+    <div className="aqi-effect-scroll">
+      <svg
+        key={animationKey}
+        viewBox={`0 0 ${width} ${height}`}
+        className="aqi-effect-svg"
+        role="img"
+        aria-label="So sánh điều kiện thời tiết giữa nhóm AQI cao và AQI thấp"
+      >
+        <text x={plotLeft} y={20} className="aqi-effect-axis-caption">Thấp hơn trong nhóm AQI cao</text>
+        <text x={plotRight} y={20} textAnchor="end" className="aqi-effect-axis-caption">Cao hơn trong nhóm AQI cao</text>
+        <text x={(plotLeft + plotRight) / 2} y={39} textAnchor="middle" className="aqi-effect-axis-title">
+          Chênh lệch chuẩn hóa giữa nhóm AQI cao và thấp (Cohen&apos;s d)
+        </text>
+
+        {ticks.map(tick => {
+          const x = xScale(tick);
+          return (
+            <g key={tick}>
+              <line
+                x1={x}
+                x2={x}
+                y1={top - 12}
+                y2={top + rowGap * data.length - 14}
+                stroke={tick === 0 ? '#64748B' : '#E2E8F0'}
+                strokeWidth={tick === 0 ? 1.6 : 1}
+                strokeDasharray={tick === 0 ? undefined : '3 4'}
+              />
+              <text x={x} y={height - 13} textAnchor="middle" className="aqi-effect-tick">
+                {tick === 0 ? '0' : formatSigned(tick, tick % 1 === 0 ? 0 : 1)}
+              </text>
+            </g>
+          );
+        })}
+
+        {data.map((item, index) => {
+          const y = top + index * rowGap;
+          const endX = xScale(item.effectSize);
+          const isPositive = item.effectSize >= 0;
+          const color = isPositive ? '#EF6A5B' : '#3B82F6';
+          const lineStart = Math.min(zeroX, endX);
+          const lineEnd = Math.max(zeroX, endX);
+          const metric = METRIC_BY_KEY[item.key];
+          const delay = 100 + index * 100;
+
+          return (
+            <g key={item.key}>
+              <text x={plotLeft - 12} y={y + 4} textAnchor="end" className="aqi-effect-label">
+                {item.label}
+              </text>
+              <line
+                x1={lineStart}
+                x2={lineEnd}
+                y1={y}
+                y2={y}
+                stroke={color}
+                strokeWidth={5}
+                strokeLinecap="round"
+                pathLength="1"
+                className="aqi-effect-line"
+                style={{ animationDelay: `${delay}ms` }}
+              >
+                <title>
+                  {`${item.fullLabel}: nhóm AQI thấp ${formatValue(item.lowMean, metric.unit)}; nhóm AQI cao ${formatValue(item.highMean, metric.unit)}; d = ${item.effectSize.toFixed(2)}`}
+                </title>
+              </line>
+              <circle
+                cx={endX}
+                cy={y}
+                r={7}
+                fill={color}
+                stroke="#ffffff"
+                strokeWidth={2.5}
+                className="aqi-effect-dot"
+                style={{ animationDelay: `${delay + 120}ms` }}
+              >
+                <title>
+                  {`${item.fullLabel}: ${item.highMean >= item.lowMean ? 'cao hơn' : 'thấp hơn'} ${formatValue(Math.abs(item.rawDifference), metric.unit)} trong nhóm AQI cao`}
+                </title>
+              </circle>
+              <text
+                x={endX + (isPositive ? 11 : -11)}
+                y={y + 4}
+                textAnchor={isPositive ? 'start' : 'end'}
+                className="aqi-effect-value"
+              >
+                d = {formatSigned(item.effectSize)}
+              </text>
+              <text x={plotRight + 20} y={y - 3} className="aqi-effect-detail">
+                Thấp: {formatValue(item.lowMean, metric.unit)} · Cao: {formatValue(item.highMean, metric.unit)}
+              </text>
+              <text x={plotRight + 20} y={y + 14} className="aqi-effect-detail-note">
+                {effectSizeStrength(item.effectSize)} · {item.effectSize >= 0 ? 'cao hơn' : 'thấp hơn'} trong nhóm AQI cao
+              </text>
+            </g>
+          );
+        })}
+      </svg>
     </div>
   );
 }
@@ -468,31 +589,53 @@ const RelationshipAnalysisTab = () => {
   const selectedMetric = METRIC_BY_KEY[selectedFactor];
   const selectedCorrelation = factorRanking.find(item => item.key === selectedFactor)?.correlation || 0;
 
-  const highAqiProfile = useMemo(() => {
-    if (!filteredRows.length) return null;
-    const threshold = quantile(filteredRows.map(row => row.aqi), 0.75);
-    const highRows = filteredRows.filter(row => row.aqi >= threshold);
+  const aqiGroupComparison = useMemo(() => {
+    if (filteredRows.length < 8) {
+      return {
+        lowThreshold: 0,
+        highThreshold: 0,
+        lowCount: 0,
+        highCount: 0,
+        factors: [],
+      };
+    }
+
+    const aqiValues = filteredRows.map(row => row.aqi);
+    const lowThreshold = quantile(aqiValues, 0.25);
+    const highThreshold = quantile(aqiValues, 0.75);
+    const lowRows = filteredRows.filter(row => row.aqi <= lowThreshold);
+    const highRows = filteredRows.filter(row => row.aqi >= highThreshold);
+
+    const factors = AQI_FACTORS
+      .map(metric => {
+        const lowMean = average(lowRows, metric.key);
+        const highMean = average(highRows, metric.key);
+        const pooledSd = pooledStandardDeviation(lowRows, highRows, metric.key);
+        const rawDifference = highMean - lowMean;
+        const effectSize = pooledSd > 0 ? rawDifference / pooledSd : 0;
+
+        return {
+          ...metric,
+          lowMean,
+          highMean,
+          rawDifference,
+          effectSize,
+          absEffectSize: Math.abs(effectSize),
+        };
+      })
+      .sort((a, b) => b.absEffectSize - a.absEffectSize);
+
     return {
-      threshold,
-      count: highRows.length,
-      temperature: average(highRows, 'temperature_mean'),
-      humidity: average(highRows, 'humidity_mean'),
-      rain: average(highRows, 'rain_sum'),
-      wind: average(highRows, 'wind_speed_max'),
-      cloud: average(highRows, 'cloud_cover_mean'),
+      lowThreshold,
+      highThreshold,
+      lowCount: lowRows.length,
+      highCount: highRows.length,
+      factors,
     };
   }, [filteredRows]);
 
+  const strongestGroupDifference = aqiGroupComparison.factors[0] || null;
   const scatterRows = useMemo(() => sampleRows(filteredRows, 650), [filteredRows]);
-  const bubbleRows = useMemo(() => sampleRows(filteredRows, 550), [filteredRows]);
-
-  const rainRange = useMemo(() => {
-    const values = bubbleRows.map(row => row.rain_sum).filter(Number.isFinite);
-    if (!values.length) return [34, 150];
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    return min === max ? [48, 105] : [36, 170];
-  }, [bubbleRows]);
 
   const dataAnimationKey = `${provinceScope}-${timePreset}-${customStart}-${customEnd}-${filteredRows.length}`;
   const scatterAnimationKey = `${dataAnimationKey}-${selectedFactor}`;
@@ -510,13 +653,6 @@ const RelationshipAnalysisTab = () => {
     getPaddedDomain(scatterRows, 'aqi', { paddingRatio: 0.08, minPadding: 5, clampMin: 0 })
   ), [scatterRows]);
 
-  const bubbleTempDomain = useMemo(() => (
-    getPaddedDomain(bubbleRows, 'temperature_mean', { paddingRatio: 0.08, minPadding: 1 })
-  ), [bubbleRows]);
-
-  const bubbleHumidityDomain = useMemo(() => (
-    getPaddedDomain(bubbleRows, 'humidity_mean', { paddingRatio: 0.06, minPadding: 2, clampMin: 0, clampMax: 100 })
-  ), [bubbleRows]);
 
   const resetAllFilters = () => {
     setProvinceScope('all');
@@ -547,6 +683,14 @@ const RelationshipAnalysisTab = () => {
         @keyframes aqiLabelEnter {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+        @keyframes aqiEffectLineEnter {
+          from { stroke-dashoffset: 1; }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes aqiEffectDotEnter {
+          from { opacity: 0; transform: scale(0.3); }
+          to { opacity: 1; transform: scale(1); }
         }
         .aqi-relationship-tab {
           display: flex;
@@ -673,7 +817,7 @@ const RelationshipAnalysisTab = () => {
         }
         .aqi-primary-grid > .chart-card,
         .aqi-scatter-card,
-        .aqi-bubble-card {
+        .aqi-profile-card {
           margin: 0;
           overflow: hidden;
           animation: aqiCardEnter 520ms 230ms ease-out both;
@@ -760,35 +904,84 @@ const RelationshipAnalysisTab = () => {
           font-size: 10.8px;
         }
         .aqi-scatter-footer strong { color: #334155; }
-        .aqi-bubble-card {
+        .aqi-profile-card {
           animation-delay: 350ms;
         }
-        .aqi-bubble-frame {
+        .aqi-effect-frame {
           width: 100%;
-          height: 300px;
+          min-height: 330px;
         }
-        .aqi-bubble-footer {
+        .aqi-effect-scroll {
+          width: 100%;
+          overflow-x: auto;
+        }
+        .aqi-effect-svg {
+          width: 100%;
+          min-width: 760px;
+          display: block;
+        }
+        .aqi-effect-axis-caption {
+          fill: #64748b;
+          font-size: 11px;
+          font-weight: 700;
+        }
+        .aqi-effect-axis-title {
+          fill: #334155;
+          font-size: 11px;
+          font-weight: 800;
+        }
+        .aqi-effect-tick {
+          fill: #64748b;
+          font-size: 10px;
+        }
+        .aqi-effect-label {
+          fill: #334155;
+          font-size: 11.5px;
+          font-weight: 800;
+        }
+        .aqi-effect-value {
+          fill: #334155;
+          font-size: 10.5px;
+          font-weight: 800;
+        }
+        .aqi-effect-detail {
+          fill: #334155;
+          font-size: 10.5px;
+          font-weight: 700;
+        }
+        .aqi-effect-detail-note {
+          fill: #64748b;
+          font-size: 10px;
+        }
+        .aqi-effect-line {
+          stroke-dasharray: 1;
+          stroke-dashoffset: 1;
+          animation: aqiEffectLineEnter 760ms ease-out forwards;
+        }
+        .aqi-effect-dot {
+          opacity: 0;
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: aqiEffectDotEnter 320ms ease-out forwards;
+        }
+        .aqi-profile-footer {
           display: flex;
           flex-wrap: wrap;
           align-items: center;
-          gap: 7px 11px;
-          padding-top: 7px;
+          justify-content: space-between;
+          gap: 8px 14px;
+          padding-top: 8px;
           color: #64748b;
           font-size: 10.8px;
         }
-        .aqi-profile-strip {
-          margin-left: auto;
+        .aqi-profile-legend {
           display: flex;
           flex-wrap: wrap;
           align-items: center;
-          justify-content: flex-end;
-          gap: 6px;
+          gap: 10px;
         }
-        .aqi-profile-chip {
-          padding: 4px 7px;
-          border-radius: 999px;
+        .aqi-profile-insight {
           color: #334155;
-          background: #f1f5f9;
           font-weight: 700;
         }
         @media (prefers-reduced-motion: reduce) {
@@ -798,9 +991,11 @@ const RelationshipAnalysisTab = () => {
           .aqi-summary-card,
           .aqi-primary-grid > .chart-card,
           .aqi-scatter-card,
-          .aqi-bubble-card,
+          .aqi-profile-card,
           .aqi-heat-cell,
-          .aqi-heat-label {
+          .aqi-heat-label,
+          .aqi-effect-line,
+          .aqi-effect-dot {
             animation: none !important;
             opacity: 1 !important;
             transform: none !important;
@@ -814,7 +1009,6 @@ const RelationshipAnalysisTab = () => {
           .aqi-summary-grid { grid-template-columns: 1fr; }
           .aqi-scatter-header { flex-direction: column; }
           .aqi-factor-toggle { justify-content: flex-start; }
-          .aqi-profile-strip { margin-left: 0; justify-content: flex-start; }
         }
         @media (max-width: 760px) {
           .aqi-goal-strip { align-items: flex-start; flex-direction: column; }
@@ -828,7 +1022,7 @@ const RelationshipAnalysisTab = () => {
         <div className="aqi-goal-copy">
           <h2>Những điều kiện thời tiết nào thường đi kèm chất lượng không khí xấu?</h2>
           <p>
-            Xác định yếu tố thời tiết có mối liên hệ rõ nhất với AQI và khám phá tổ hợp điều kiện thường xuất hiện cùng mức AQI cao.
+            Xác định yếu tố liên hệ rõ nhất với AQI và so sánh điều kiện thời tiết giữa nhóm AQI cao với nhóm AQI thấp.
           </p>
         </div>
         <span className="aqi-goal-badge"><Sparkles size={14} /> Trọng tâm: AQI</span>
@@ -898,9 +1092,11 @@ const RelationshipAnalysisTab = () => {
         <div className="aqi-summary-card">
           <div className="aqi-summary-icon"><Activity size={18} /></div>
           <div className="aqi-summary-copy">
-            <span className="aqi-summary-label">Nhóm AQI cao</span>
-            <span className="aqi-summary-value">AQI ≥ {highAqiProfile ? highAqiProfile.threshold.toFixed(0) : 'N/A'}</span>
-            <span className="aqi-summary-note">Top 25% · {highAqiProfile?.count || 0} quan sát</span>
+            <span className="aqi-summary-label">Khác biệt nhóm lớn nhất</span>
+            <span className="aqi-summary-value">{strongestGroupDifference?.fullLabel || 'Chưa có dữ liệu'}</span>
+            <span className="aqi-summary-note">
+              d = {strongestGroupDifference ? formatSigned(strongestGroupDifference.effectSize) : '0.00'} · {effectSizeStrength(strongestGroupDifference?.effectSize || 0)}
+            </span>
           </div>
         </div>
       </div>
@@ -1062,94 +1258,42 @@ const RelationshipAnalysisTab = () => {
         </div>
       </figure>
 
-      <figure className="chart-card aqi-bubble-card">
+      <figure className="chart-card aqi-profile-card">
         <div className="chart-card-header aqi-card-header">
           <div className="chart-title-flex">
-            <Gauge size={17} color="#8B5CF6" />
-            <h3 className="chart-card-title m-0">Tổ hợp điều kiện thời tiết đi kèm AQI cao</h3>
-          </div>
-          <span className="chart-subtitle-badge">X: Nhiệt độ · Y: Độ ẩm · Size: Mưa · Color: AQI</span>
-        </div>
-
-        <div className="aqi-bubble-frame">
-          <ResponsiveContainer>
-            <ScatterChart margin={{ top: 8, right: 20, bottom: 26, left: 14 }}>
-              <CartesianGrid stroke="#E2E8F0" vertical={false} strokeDasharray="3 3" />
-              <XAxis
-                type="number"
-                dataKey="temperature_mean"
-                name="Nhiệt độ trung bình"
-                unit="°C"
-                domain={bubbleTempDomain}
-                allowDataOverflow={false}
-                tickCount={6}
-                tickFormatter={value => formatAxisTick(value, 'temperature_mean')}
-                tick={{ fontSize: 10.5, fill: '#64748B' }}
-                axisLine={{ stroke: '#CBD5E1' }}
-                label={{ value: 'Nhiệt độ trung bình (°C)', position: 'insideBottom', offset: -14, fill: '#64748B', fontSize: 10 }}
-              />
-              <YAxis
-                type="number"
-                dataKey="humidity_mean"
-                name="Độ ẩm"
-                unit="%"
-                domain={bubbleHumidityDomain}
-                allowDataOverflow={false}
-                tickCount={6}
-                allowDecimals={false}
-                tickFormatter={value => formatAxisTick(value, 'humidity_mean')}
-                tick={{ fontSize: 10.5, fill: '#64748B' }}
-                axisLine={{ stroke: '#CBD5E1' }}
-                width={58}
-                label={{ value: 'Độ ẩm (%)', angle: -90, position: 'insideLeft', offset: 8, fill: '#64748B', fontSize: 10 }}
-              />
-              <ZAxis type="number" dataKey="rain_sum" name="Lượng mưa" unit="mm" range={rainRange} />
-              <RechartsTooltip
-                content={<BubbleTooltip />}
-                cursor={{ stroke: '#94A3B8', strokeWidth: 1, strokeDasharray: '4 4' }}
-              />
-              <Scatter
-                key={`${dataAnimationKey}-bubble`}
-                data={bubbleRows}
-                fillOpacity={0.7}
-                stroke="#ffffff"
-                strokeWidth={1.2}
-                isAnimationActive
-                animationBegin={160}
-                animationDuration={1000}
-                animationEasing="ease-out"
-              >
-                {bubbleRows.map((row, index) => (
-                  <Cell key={`${row.province}-${row.date}-${index}`} fill={aqiColor(row.aqi)} />
-                ))}
-              </Scatter>
-            </ScatterChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="aqi-bubble-footer">
-          <span style={{ fontWeight: 700, color: '#334155' }}>Màu AQI:</span>
-          {[
-            { label: 'Tốt', color: '#10B981' },
-            { label: 'Vừa phải', color: '#FBBF24' },
-            { label: 'Nhạy cảm', color: '#F97316' },
-            { label: 'Không khỏe', color: '#EF4444' },
-            { label: 'Rất kém', color: '#8B5CF6' },
-          ].map(item => (
-            <span key={item.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 9, height: 9, borderRadius: '50%', backgroundColor: item.color }} />
-              {item.label}
-            </span>
-          ))}
-
-          {highAqiProfile && (
-            <div className="aqi-profile-strip">
-              <span style={{ fontWeight: 700, color: '#334155' }}>Hồ sơ nhóm AQI cao:</span>
-              <span className="aqi-profile-chip">{formatValue(highAqiProfile.temperature, '°C')}</span>
-              <span className="aqi-profile-chip">Ẩm {formatValue(highAqiProfile.humidity, '%', 0)}</span>
-              <span className="aqi-profile-chip">Mưa {formatValue(highAqiProfile.rain, ' mm')}</span>
-              <span className="aqi-profile-chip">Gió {formatValue(highAqiProfile.wind, ' km/h')}</span>
+            <Activity size={17} color="#8B5CF6" />
+            <div>
+              <h3 className="chart-card-title m-0">Nhóm AQI cao khác nhóm AQI thấp như thế nào?</h3>
+              <p style={{ margin: '3px 0 0', color: '#64748B', fontSize: 10.8 }}>
+                So sánh top 25% AQI cao với bottom 25% AQI thấp bằng chênh lệch chuẩn hóa.
+              </p>
             </div>
+          </div>
+          <span className="chart-subtitle-badge">Cohen&apos;s d · |d| càng lớn, khác biệt càng rõ</span>
+        </div>
+
+        <div className="aqi-effect-frame">
+          <AqiGroupEffectChart data={aqiGroupComparison.factors} animationKey={`${dataAnimationKey}-profile`} />
+        </div>
+
+        <div className="aqi-profile-footer">
+          <div className="aqi-profile-legend">
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#3B82F6' }} />
+              Thấp hơn trong nhóm AQI cao
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#EF6A5B' }} />
+              Cao hơn trong nhóm AQI cao
+            </span>
+            <span>
+              AQI thấp ≤ {aqiGroupComparison.lowThreshold.toFixed(0)} ({aqiGroupComparison.lowCount} quan sát) · AQI cao ≥ {aqiGroupComparison.highThreshold.toFixed(0)} ({aqiGroupComparison.highCount} quan sát)
+            </span>
+          </div>
+          {strongestGroupDifference && (
+            <span className="aqi-profile-insight">
+              Khác biệt lớn nhất: {strongestGroupDifference.fullLabel} {strongestGroupDifference.effectSize >= 0 ? 'cao hơn' : 'thấp hơn'} trong nhóm AQI cao (d = {formatSigned(strongestGroupDifference.effectSize)}).
+            </span>
           )}
         </div>
       </figure>
