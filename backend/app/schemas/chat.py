@@ -15,6 +15,7 @@ class HistoryMessage(BaseModel):
     """Một tin nhắn trong lịch sử hội thoại."""
     role: Literal["user", "assistant"]
     content: str
+    images: list[str] = Field(default_factory=list, description="Danh sách base64 images (nếu có)")
 
 
 class ChatRequest(BaseModel):
@@ -26,11 +27,13 @@ class ChatRequest(BaseModel):
     - conversation_id: None nếu là conversation mới
     - dataset_id: định danh dataset đang dùng
     - history: danh sách tin nhắn trước đó
+    - images: danh sách base64 images (tối đa theo env)
     """
     message: str = Field(..., min_length=1, max_length=4000, description="Câu hỏi của user")
     conversation_id: Optional[str] = Field(None, description="ID conversation, None nếu mới")
     dataset_id: Optional[str] = Field("default", description="ID của dataset đang phân tích")
     history: list[HistoryMessage] = Field(default_factory=list, description="Lịch sử hội thoại")
+    images: list[str] = Field(default_factory=list, description="Danh sách base64 images")
 
     class Config:
         json_schema_extra = {

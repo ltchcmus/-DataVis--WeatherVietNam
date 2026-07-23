@@ -80,12 +80,19 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
                 yield f"data: {json.dumps({'type': 'error', 'code': 400, 'message': error_msg})}\n\n"
                 return
 
+            # Kiểm tra số lượng ảnh
+            if request.images and len(request.images) > settings.max_image_uploads:
+                error_msg = f"Chỉ được phép tải lên tối đa {settings.max_image_uploads} ảnh cùng lúc."
+                yield f"data: {json.dumps({'type': 'error', 'code': 400, 'message': error_msg})}\n\n"
+                return
+
             # Streaming: yield từng chunk
             full_text = ""
             for chunk in llm_service.generate_stream(
                 system_prompt=system_prompt,
                 history=gemini_history,
                 user_message=request.message,
+                images=request.images
             ):
                 if chunk.startswith("[ERROR]"):
                     yield f"data: {json.dumps({'type': 'error', 'message': chunk})}\n\n"
@@ -106,7 +113,7 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
                 chat_response.warnings.extend(warnings)
 
             # Lưu vào DB
-            _save_messages(db, conversation_id, request.message, chat_response)
+            _save_messages(db, conversation_id, request.message, chat_response, images=request.images)
 
             # Gửi final event với toàn bộ response
             yield f"data: {json.dumps({'type': 'done', 'response': chat_response.model_dump()})}\n\n"

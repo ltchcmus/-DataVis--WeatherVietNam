@@ -1,1 +1,56 @@
-print('Hello World')
+import pandas as pd
+import plotly.express as px
+from sqlalchemy import create_engine
+from datetime import datetime, timedelta
+
+# YÊU CẦU NGƯỜI DÙNG: Hãy điền DATABASE_URL của Supabase vào biến dưới đây trước khi chạy
+DATABASE_URL = "postgresql://postgres.mdivxdogfcegwvesizbj:Cong2642005%40%40%40@aws-0-ap-southeast-2.pooler.supabase.com:6543/postgres"
+if DATABASE_URL == "<YOUR_DATABASE_URL_HERE>":
+    raise ValueError("Vui lòng điền DATABASE_URL thực tế vào code!")
+
+engine = create_engine(DATABASE_URL)
+
+# Tính toán ngày bắt đầu (1 tháng trước)
+end_date = datetime.now()
+start_date = end_date - timedelta(days=30)
+
+query = f"""
+SELECT 
+    w.date, 
+    c.city as province, 
+    w.temperature_2m_mean, 
+    w.rain_sum 
+FROM weather_daily w
+JOIN cities c ON w.city_id = c.city_id
+WHERE w.date BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'
+ORDER BY w.date, c.city
+"""
+df = pd.read_sql(query, engine)
+
+# Chuyển đổi cột 'date' sang định dạng datetime nếu chưa phải
+df['date'] = pd.to_datetime(df['date'])
+
+# Tạo biểu đồ scatter tương tác
+fig = px.scatter(
+    df,
+    x='temperature_2m_mean',
+    y='rain_sum',
+    color='province',
+    animation_frame='date', # Thêm chức năng animation theo ngày
+    animation_group='province',
+    hover_name='province',
+    hover_data={'date': True, 'temperature_2m_mean': ':.1f', 'rain_sum': ':.1f'},
+    title='Tương quan giữa Nhiệt độ trung bình và Lượng mưa (1 tháng gần nhất)',
+    labels={
+        'temperature_2m_mean': 'Nhiệt độ trung bình (°C)',
+        'rain_sum': 'Tổng lượng mưa (mm)',
+        'province': 'Tỉnh/Thành phố'
+    }
+)
+
+fig.update_layout(
+    xaxis_title='Nhiệt độ trung bình (°C)',
+    yaxis_title='Tổng lượng mưa (mm)'
+)
+
+fig.show()

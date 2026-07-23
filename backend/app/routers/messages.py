@@ -21,6 +21,7 @@ class MessageOut(BaseModel):
     code: Optional[str] = None
     explanation: Optional[str] = None
     suggestions: Optional[List[str]] = None
+    images: Optional[List[str]] = None
     request_id: Optional[str] = None
     created_at: datetime
 
@@ -47,6 +48,14 @@ def get_messages(conversation_id: str, db: Session = Depends(get_db)):
                 suggestions_list = json.loads(m.suggestions)
             except Exception:
                 suggestions_list = [m.suggestions]
+                
+        images_list = None
+        if m.images:
+            try:
+                images_list = json.loads(m.images)
+            except Exception:
+                pass
+
         result.append(MessageOut(
             id=m.id,
             conversation_id=m.conversation_id,
@@ -56,6 +65,7 @@ def get_messages(conversation_id: str, db: Session = Depends(get_db)):
             code=m.code,
             explanation=m.explanation,
             suggestions=suggestions_list,
+            images=images_list,
             request_id=m.request_id,
             created_at=m.created_at,
         ))

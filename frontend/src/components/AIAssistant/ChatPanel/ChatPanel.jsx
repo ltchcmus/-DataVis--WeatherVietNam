@@ -49,7 +49,11 @@ const ChatPanel = ({ chat, isFullScreen, onToggleFullScreen }) => {
           </div>
         ) : (
           messages.map((msg, idx) => (
-            <MessageBubble key={msg.id || idx} message={msg} />
+            <MessageBubble 
+              key={msg.id || idx} 
+              message={msg} 
+              onSuggestionClick={sendMessage}
+            />
           ))
         )}
         <div ref={messagesEndRef} />
