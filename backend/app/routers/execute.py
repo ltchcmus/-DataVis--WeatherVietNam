@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotly.graph_objs as go
 
 from app.schemas.execute import ExecuteRequest, ExecuteResponse
 from app.utils.security import validate_code
@@ -63,7 +64,10 @@ async def execute_code(req: ExecuteRequest, db: Session = Depends(get_db)):
                     output_type = "chart"
                     plt.close('all')
                     
-                if 'result' in local_vars and isinstance(local_vars['result'], pd.DataFrame):
+                if 'fig' in local_vars and isinstance(local_vars['fig'], go.Figure):
+                    output_type = "plotly"
+                    result_str = local_vars['fig'].to_json()
+                elif 'result' in local_vars and isinstance(local_vars['result'], pd.DataFrame):
                     output_type = "dataframe"
                     result_str = local_vars['result'].to_json(orient='records')
                 

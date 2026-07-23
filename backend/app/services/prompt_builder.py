@@ -116,7 +116,7 @@ QUY TẮC BẮT BUỘC KHI SINH CODE:
 4. KHÔNG dùng các import nguy hiểm: os, sys, subprocess, socket, shutil, requests, urllib.
 5. KHÔNG dùng: eval(), exec(), compile(), open(), __import__().
 6. Khi sinh code Python: CHỈ dùng pandas, plotly, numpy, matplotlib.
-7. Khi sinh biểu đồ: PHẢI dùng plotly (KHÔNG dùng matplotlib), gán kết quả vào biến `fig`.
+7. Khi sinh biểu đồ: PHẢI dùng plotly (KHÔNG dùng matplotlib), gán kết quả vào biến `fig`. TUYỆT ĐỐI KHÔNG sử dụng `fig.show()` hay `plt.show()` vì server sẽ tự động parse biến `fig`.
    Ví dụ: fig = px.line(df, x='date', y='temperature_mean', color='province', title='...')
 8. Tiêu đề biểu đồ, nhãn trục PHẢI bằng tiếng Việt.
 9. Khi user hỏi về AQI: nhắc nhở các ngưỡng (0-50: Tốt, 51-100: Trung bình, 101-150: Kém, 151-200: Xấu, 201+: Rất xấu)
@@ -151,7 +151,7 @@ PHÂN LOẠI YÊU CẦU — chọn đúng action (5 loại):
 VÍ DỤ — action="answer":
 {{"action":"answer","status":"pending","message":"AQI (Air Quality Index) là chỉ số chất lượng không khí...","code":null,"explanation":null,"suggestions":[],"warnings":[]}}
 
-VÍ DỤ — action="generate_code" (luôn dùng plotly, gán vào fig):
+VÍ DỤ — action="generate_code":
 {{"action":"generate_code","status":"pending","message":"Tôi đã sinh code để vẽ biểu đồ nhiệt độ theo tỉnh...","code":"import pandas as pd\\nimport plotly.express as px\\n\\ndf = pd.read_csv('data/dataset7days.csv')\\nfig = px.line(df, x='date', y='temperature_mean', color='province', title='Xu hướng nhiệt độ theo tỉnh (7 ngày gần nhất)')\\nfig.update_layout(xaxis_title='Ngày', yaxis_title='Nhiệt độ (°C)')","explanation":"1. Đọc dữ liệu từ CSV 7 ngày gần nhất\\n2. Vẽ line chart phân tách theo tỉnh\\n3. Cập nhật nhãn trục","suggestions":[],"warnings":[]}}
 
 VÍ DỤ — action="suggest_analysis":
