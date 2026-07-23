@@ -444,7 +444,7 @@ const ProvinceComparisonTab = () => {
       )}
 
       <div className="comparison-grid">
-        <figure className="chart-card comparison-card-wide">
+        <figure className="chart-card">
           <div className="chart-card-header">
             <div className="chart-title-flex">
               <Boxes size={18} color="#2563EB" />
@@ -549,10 +549,9 @@ const ProvinceComparisonTab = () => {
             </ResponsiveContainer>
           </div>
         </figure>
-      </div>
 
-      <div className="ranking-section comparison-ranking">
-        <div className="ranking-section-header-flex">
+        <div className="chart-card ranking-section comparison-ranking">
+          <div className="ranking-section-header-flex">
           <div className="ranking-section-title">
             <h2>{rankingTitle}</h2>
             <p className="ranking-section-subtitle">Đổi biến để trả lời nhanh tỉnh nóng, mưa nhiều, AQI tốt, ẩm cao hoặc gió mạnh.</p>
@@ -612,6 +611,7 @@ const ProvinceComparisonTab = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </div>
       </div>
     </div>
   );
