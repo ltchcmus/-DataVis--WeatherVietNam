@@ -39,7 +39,6 @@ const METRICS = [
 
 const AQI_FACTORS = METRICS.filter(metric => metric.key !== 'aqi');
 const METRIC_BY_KEY = Object.fromEntries(METRICS.map(metric => [metric.key, metric]));
-const NOTABLE_CORRELATION = 0.4;
 
 function toFiniteNumber(value) {
   if (value === null || value === undefined || value === '') return null;
@@ -415,13 +414,14 @@ function AqiGroupEffectChart({ data, animationKey }) {
     return <div className="overview-empty"><p>Không đủ dữ liệu để so sánh hai nhóm AQI.</p></div>;
   }
 
-  const width = 940;
+  const width = 1000;
   const height = 330;
   const labelWidth = 132;
-  const detailWidth = 210;
+  const detailWidth = 230;
   const plotLeft = labelWidth;
   const plotRight = width - detailWidth;
   const plotWidth = plotRight - plotLeft;
+  const detailX = plotRight + 52;
   const top = 58;
   const rowGap = 48;
   const maxAbs = Math.max(0.5, ...data.map(item => Math.abs(item.effectSize)));
@@ -522,7 +522,7 @@ function AqiGroupEffectChart({ data, animationKey }) {
               >
                 d = {formatSigned(item.effectSize)}
               </text>
-              <text x={plotRight + 16} y={y + 4} className="aqi-effect-detail">
+              <text x={detailX} y={y + 4} className="aqi-effect-detail">
                 {formatValue(item.lowMean, metric.unit)} → {formatValue(item.highMean, metric.unit)}
               </text>
             </g>
@@ -594,7 +594,6 @@ const RelationshipAnalysisTab = () => {
   ), [filteredRows]);
 
   const strongestFactor = factorRanking[0] || null;
-  const notableFactors = factorRanking.filter(item => item.absCorrelation >= NOTABLE_CORRELATION);
   const selectedMetric = METRIC_BY_KEY[selectedFactor];
   const selectedCorrelation = factorRanking.find(item => item.key === selectedFactor)?.correlation || 0;
 
@@ -764,7 +763,7 @@ const RelationshipAnalysisTab = () => {
         }
         .aqi-summary-grid {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 12px;
         }
         .aqi-summary-card {
@@ -781,7 +780,6 @@ const RelationshipAnalysisTab = () => {
         }
         .aqi-summary-card:nth-child(1) { animation-delay: 90ms; }
         .aqi-summary-card:nth-child(2) { animation-delay: 145ms; }
-        .aqi-summary-card:nth-child(3) { animation-delay: 200ms; }
         .aqi-summary-icon {
           width: 34px;
           height: 34px;
@@ -1101,14 +1099,6 @@ const RelationshipAnalysisTab = () => {
           </div>
         </div>
 
-        <div className="aqi-summary-card">
-          <div className="aqi-summary-icon"><BarChart3 size={18} /></div>
-          <div className="aqi-summary-copy">
-            <span className="aqi-summary-label">Yếu tố đáng chú ý</span>
-            <span className="aqi-summary-value">{notableFactors.length} / {AQI_FACTORS.length} yếu tố</span>
-            <span className="aqi-summary-note">Ngưỡng |r| ≥ {NOTABLE_CORRELATION.toFixed(2)}</span>
-          </div>
-        </div>
 
         <div className="aqi-summary-card">
           <div className="aqi-summary-icon"><Activity size={18} /></div>
