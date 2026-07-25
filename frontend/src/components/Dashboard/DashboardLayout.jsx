@@ -17,7 +17,7 @@ const DashboardLayout = ({ isChatVisible, onToggleChat }) => {
   const tabs = [
     { id: 'overview', label: 'Tổng quan', icon: <MapIcon size={18} /> },
     { id: 'climate', label: 'Biến động theo thời gian', icon: <Thermometer size={18} /> },
-    { id: 'compare', label: 'So sánh tỉnh', icon: <GitCompare size={18} /> },
+    { id: 'compare', label: 'So sánh tỉnh/thành phố', icon: <GitCompare size={18} /> },
     { id: 'relationship', label: 'AQI & Thời tiết', icon: <Network size={18} /> },
   ];
 

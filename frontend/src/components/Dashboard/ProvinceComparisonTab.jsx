@@ -113,7 +113,7 @@ function BoxplotChart({ data }) {
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
   const width = 980;
-  const rowHeight = 38;
+  const rowHeight = 32;
   const margin = { top: 28, right: 48, bottom: 42, left: 150 };
   const plotWidth = width - margin.left - margin.right;
   const height = margin.top + margin.bottom + rowHeight * data.length;
@@ -550,6 +550,69 @@ const ProvinceComparisonTab = () => {
           <BoxplotChart data={boxplotRows} />
         </figure>
 
+        <div className="chart-card ranking-section comparison-ranking">
+          <div className="ranking-section-header-flex">
+            <div className="ranking-section-title">
+              <h2>{rankingTitle}</h2>
+              <p className="ranking-section-subtitle">Đổi biến để trả lời nhanh tỉnh nóng, mưa nhiều, AQI tốt, ẩm cao hoặc gió mạnh.</p>
+            </div>
+            <div className="metric-toggle">
+              {METRICS.map(metric => (
+                <button
+                  key={metric.key}
+                  className={`toggle-btn ${rankingMetric === metric.key ? 'active' : ''}`}
+                  onClick={() => setRankingMetric(metric.key)}
+                >
+                  {metric.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="top10-chart-frame">
+            <ResponsiveContainer>
+              <BarChart
+                data={top10Rows}
+                layout="vertical"
+                margin={{ top: 12, right: 72, bottom: 8, left: 36 }}
+                barCategoryGap={8}
+              >
+                <CartesianGrid stroke="#e1e0d9" horizontal={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 12, fill: '#64748B' }}
+                  axisLine={{ stroke: '#c3c2b7' }}
+                  tickLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="province"
+                  width={116}
+                  tick={{ fontSize: 12, fill: '#334155', fontWeight: 600 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <RechartsTooltip content={<RankingBarTooltip metric={rankingMetricConfig} />} cursor={{ fill: '#F1F5F9' }} />
+                <Bar
+                  dataKey={rankingMetric}
+                  name={rankingMetricConfig.fullLabel}
+                  fill="#2a78d6"
+                  radius={[0, 4, 4, 0]}
+                  maxBarSize={24}
+                  activeBar={{ fill: '#1c5cab' }}
+                >
+                  <LabelList
+                    dataKey={rankingMetric}
+                    position="right"
+                    formatter={value => formatValue(value, rankingMetricConfig.unit, rankingMetric === 'aqi' || rankingMetric === 'humidity_mean' ? 0 : 1)}
+                    className="top10-bar-label"
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
         <figure className="chart-card">
           <div className="chart-card-header">
             <div className="chart-title-flex">
@@ -644,69 +707,6 @@ const ProvinceComparisonTab = () => {
             </ResponsiveContainer>
           </div>
         </figure>
-
-        <div className="chart-card ranking-section comparison-ranking">
-          <div className="ranking-section-header-flex">
-            <div className="ranking-section-title">
-              <h2>{rankingTitle}</h2>
-              <p className="ranking-section-subtitle">Đổi biến để trả lời nhanh tỉnh nóng, mưa nhiều, AQI tốt, ẩm cao hoặc gió mạnh.</p>
-            </div>
-            <div className="metric-toggle">
-              {METRICS.map(metric => (
-                <button
-                  key={metric.key}
-                  className={`toggle-btn ${rankingMetric === metric.key ? 'active' : ''}`}
-                  onClick={() => setRankingMetric(metric.key)}
-                >
-                  {metric.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="top10-chart-frame">
-            <ResponsiveContainer>
-              <BarChart
-                data={top10Rows}
-                layout="vertical"
-                margin={{ top: 12, right: 72, bottom: 8, left: 36 }}
-                barCategoryGap={8}
-              >
-                <CartesianGrid stroke="#e1e0d9" horizontal={false} />
-                <XAxis
-                  type="number"
-                  tick={{ fontSize: 12, fill: '#64748B' }}
-                  axisLine={{ stroke: '#c3c2b7' }}
-                  tickLine={false}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="province"
-                  width={116}
-                  tick={{ fontSize: 12, fill: '#334155', fontWeight: 600 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <RechartsTooltip content={<RankingBarTooltip metric={rankingMetricConfig} />} cursor={{ fill: '#F1F5F9' }} />
-                <Bar
-                  dataKey={rankingMetric}
-                  name={rankingMetricConfig.fullLabel}
-                  fill="#2a78d6"
-                  radius={[0, 4, 4, 0]}
-                  maxBarSize={24}
-                  activeBar={{ fill: '#1c5cab' }}
-                >
-                  <LabelList
-                    dataKey={rankingMetric}
-                    position="right"
-                    formatter={value => formatValue(value, rankingMetricConfig.unit, rankingMetric === 'aqi' || rankingMetric === 'humidity_mean' ? 0 : 1)}
-                    className="top10-bar-label"
-                  />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       </div>
     </div>
   );
