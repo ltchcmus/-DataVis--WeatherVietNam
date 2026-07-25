@@ -17,7 +17,7 @@ Dự án được chia thành 3 phần chính:
 Group7/
 ├── backend/          # Backend API (FastAPI) & Data Pipeline
 ├── frontend/         # Frontend Web (ReactJS, Vite, Recharts, Leaflet)
-└── infra/            # Scripts/Manifests (nếu có) hỗ trợ hạ tầng
+└── notebooks/        # Notebooks (Jupyter, VSCode) chứa EDA và phân tích dữ liệu
 ```
 
 ## Các Công Nghệ Sử Dụng
