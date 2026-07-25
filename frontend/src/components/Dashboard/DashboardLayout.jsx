@@ -17,7 +17,7 @@ const DashboardLayout = ({ isChatVisible, onToggleChat }) => {
   const tabs = [
     { id: 'overview', label: 'Tổng quan', icon: <MapIcon size={18} /> },
     { id: 'climate', label: 'Biến động theo thời gian', icon: <Thermometer size={18} /> },
-    { id: 'compare', label: 'So sánh tỉnh', icon: <GitCompare size={18} /> },
+    { id: 'compare', label: 'So sánh tỉnh/thành phố', icon: <GitCompare size={18} /> },
     { id: 'relationship', label: 'AQI & Thời tiết', icon: <Network size={18} /> },
   ];
 
@@ -29,18 +29,18 @@ const DashboardLayout = ({ isChatVisible, onToggleChat }) => {
           <p className="dashboard-subtitle">Nền tảng phân tích dữ liệu môi trường thông minh</p>
         </div>
         {!isChatVisible && (
-          <button 
+          <button
             onClick={onToggleChat}
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              padding: '8px 16px', 
-              backgroundColor: 'var(--accent-color)', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '8px', 
-              cursor: 'pointer', 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              backgroundColor: 'var(--accent-color)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
               fontWeight: '500',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               transition: 'all 0.2s'
