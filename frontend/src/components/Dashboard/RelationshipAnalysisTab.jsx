@@ -939,11 +939,11 @@ const RelationshipAnalysisTab = () => {
         }
         .rel-heatmap-scroll {
           width: 100%;
-          overflow-x: hidden;
+          overflow-x: auto;
         }
         .rel-heatmap-svg {
           width: 100%;
-          height: auto;
+          min-width: 930px;
           display: block;
         }
         .rel-heatmap-cell {
