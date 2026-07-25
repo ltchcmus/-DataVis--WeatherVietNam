@@ -25,8 +25,8 @@ const DashboardLayout = ({ isChatVisible, onToggleChat }) => {
     <div className="dashboard-panel">
       <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="header-title-container">
-          <h1 className="dashboard-title">Vietnam Data Visualization</h1>
-          <p className="dashboard-subtitle">Hệ thống phân tích thời tiết và môi trường</p>
+          <h1 className="dashboard-title">Thời Tiết & Khí Hậu Việt Nam</h1>
+          <p className="dashboard-subtitle">Nền tảng phân tích dữ liệu môi trường thông minh</p>
         </div>
         {!isChatVisible && (
           <button 

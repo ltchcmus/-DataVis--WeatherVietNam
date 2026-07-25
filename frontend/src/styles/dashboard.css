@@ -1,44 +1,54 @@
 /* frontend/src/styles/dashboard.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Premium Light Theme */
-  --bg-main: #F1F5F9;         /* Slate 100 */
-  --bg-panel: #FFFFFF;        
+  /* Premium Glassmorphism Theme (Light/Airy) */
+  --bg-main: #F4F7FB;         /* Soft ambient background */
+  --bg-gradient: linear-gradient(135deg, #F4F7FB 0%, #E2E8F0 100%);
+  --bg-panel: rgba(255, 255, 255, 0.7); /* Translucent */
+  --bg-panel-solid: #FFFFFF;
   --text-primary: #0F172A;    /* Slate 900 */
-  --text-secondary: #64748B;  /* Slate 500 */
-  --border-color: #E2E8F0;    /* Slate 200 */
+  --text-secondary: #475569;  /* Slate 600 - darker for readability */
+  --border-color: rgba(255, 255, 255, 0.4); /* Glass border */
+  --border-solid: #E2E8F0;
   
-  /* Semantic Colors */
+  /* Semantic Colors - Vibrant Gradients */
   --accent-color: #3B82F6;    /* Blue 500 */
+  --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   --accent-hover: #2563EB;    
   --success-color: #10B981;   
   --danger-color: #EF4444;    
   
-  /* Weather & AQI Semantic Colors */
-  --temp-cold: #3B82F6;
+  /* Weather & AQI Semantic Colors - Modern */
+  --temp-cold: #0EA5E9;
   --temp-mean: #F59E0B;
   --temp-hot: #EF4444;
-  --rain: #0EA5E9;
+  --rain: #0284C7;
   --wind: #8B5CF6;
-  --humidity: #10B981;
+  --humidity: #059669;
 
   --aqi-good: #10B981;
   --aqi-moderate: #FBBF24;
   --aqi-unhealthy-sensitive: #F97316;
   --aqi-unhealthy: #EF4444;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  /* Premium Soft Shadows */
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Glass Effects */
+  --glass-blur: blur(16px);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 body, html {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: 'Inter', -apple-system, sans-serif;
-  background-color: var(--bg-main);
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  background: var(--bg-gradient);
+  background-attachment: fixed;
   color: var(--text-primary);
 }
 
@@ -52,14 +62,14 @@ body, html {
 .dashboard-panel {
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-main);
+  background: transparent;
   overflow-y: auto;
   height: 100%;
 }
 
 .resize-handle {
   width: 8px;
-  background-color: var(--border-color);
+  background-color: transparent;
   cursor: col-resize;
   transition: background-color 0.2s;
   position: relative;
@@ -73,15 +83,17 @@ body, html {
   flex: 3; 
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-panel);
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: var(--glass-blur);
   position: relative;
   height: 100vh;
+  box-shadow: -4px 0 15px rgba(0,0,0,0.03);
 }
 
 /* Header */
 .dashboard-header {
   padding: 1.5rem 2rem 0.5rem;
-  background-color: var(--bg-main);
+  background: transparent;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -95,15 +107,19 @@ body, html {
 .dashboard-title {
   margin: 0 0 0.25rem 0;
   font-size: 1.75rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.025em;
+  background: linear-gradient(135deg, #1E293B, #3B82F6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .dashboard-subtitle {
   margin: 0;
   color: var(--text-secondary);
   font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .filter-select {
@@ -128,36 +144,39 @@ body, html {
 .dashboard-tabs-container {
   padding: 1rem 2rem 0;
   border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-main);
+  background: transparent;
 }
 
 .dashboard-tabs {
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .tab-btn {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
+  border-radius: 999px; /* Pill shape */
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 0.5rem;
 }
 
 .tab-btn:hover {
   color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .tab-btn.active {
-  color: var(--accent-color);
-  border-bottom-color: var(--accent-color);
+  color: white;
+  background: var(--accent-gradient);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 /* Content & Grid */
@@ -180,14 +199,16 @@ body, html {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Generic Card Style */
+/* Generic Card Style - Glassmorphism */
 .card-base {
   background: var(--bg-panel);
-  border-radius: 1rem;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1.25rem;
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: box-shadow 0.2s, transform 0.2s;
+  border: var(--glass-border);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 .card-base:hover {
   box-shadow: var(--shadow-md);
@@ -197,15 +218,17 @@ body, html {
 .kpi-card {
   grid-column: span 3;
   background: var(--bg-panel);
-  border-radius: 1rem;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1.25rem;
   padding: 1.25rem 1.5rem;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: box-shadow 0.2s, transform 0.2s;
+  border: var(--glass-border);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 .kpi-card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 .kpi-card-inner {
   display: flex;
@@ -228,20 +251,24 @@ body, html {
 .trend-chart {
   grid-column: span 12;
   background: var(--bg-panel);
-  border-radius: 1rem;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1.25rem;
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
+  border: var(--glass-border);
   min-height: 400px;
 }
 
 .half-chart {
   grid-column: span 6;
   background: var(--bg-panel);
-  border-radius: 1rem;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1.25rem;
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
+  border: var(--glass-border);
   min-height: 350px;
 }
 
@@ -276,9 +303,11 @@ body, html {
   gap: 1.25rem;
   align-items: flex-end;
   flex-wrap: wrap;
-  background: var(--bg-panel, #ffffff);
-  border: 1px solid var(--border-color, #E2E8F0);
-  border-radius: 0.75rem;
+  background: var(--bg-panel);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: 1rem;
   padding: 1rem 1.25rem;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -315,10 +344,12 @@ body, html {
   display: flex;
   gap: 0.875rem;
   align-items: flex-start;
-  background: var(--bg-panel, #ffffff);
-  border-radius: 0.75rem;
-  padding: 1.125rem 1.25rem;
-  border: 1px solid var(--border-color, #E2E8F0);
+  background: var(--bg-panel);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1rem;
+  padding: 1.25rem 1.25rem;
+  border: var(--glass-border);
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
@@ -375,10 +406,12 @@ body, html {
 }
 
 .chart-card {
-  background: var(--bg-panel, #ffffff);
-  border-radius: 0.85rem;
+  background: var(--bg-panel);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1rem;
   padding: 1.25rem;
-  border: 1px solid var(--border-color, #E2E8F0);
+  border: var(--glass-border);
   box-shadow: var(--shadow-sm);
   margin: 0;
 }
@@ -569,10 +602,12 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  background: var(--bg-panel, #ffffff);
-  border-radius: 0.85rem;
+  background: var(--bg-panel);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1rem;
   padding: 1.25rem;
-  border: 1px solid var(--border-color, #E2E8F0);
+  border: var(--glass-border);
   box-shadow: var(--shadow-sm);
 }
 

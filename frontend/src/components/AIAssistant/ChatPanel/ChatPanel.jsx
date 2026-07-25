@@ -22,7 +22,7 @@ const ChatPanel = ({ chat, isFullScreen, onToggleFullScreen, onCloseChat }) => {
       <div className="chat-header">
         <div className="chat-header-title">
           <span className="status-dot"></span>
-          AI Assistant
+          Trợ lý AI Thời Tiết
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button 
