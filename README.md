@@ -55,6 +55,7 @@ Tài liệu API (Swagger UI): http://localhost:8000/docs
 
 ```bash
 cd frontend
+cp .env.example .env
 npm install
 npm run dev
 ```
