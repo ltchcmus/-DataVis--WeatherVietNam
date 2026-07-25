@@ -36,7 +36,7 @@ python -m venv venv
 # Active venv (Windows: venv\Scripts\activate | Mac/Linux: source venv/bin/activate)
 pip install -r requirements.txt
 
-# Cấu hình biến môi trường
+# Cấu hình biến môi trường (nếu đã có file .env thì bỏ qua lệnh này để tránh đè lên file cũ)
 cp .env.example .env
 # Chỉnh sửa file .env với GEMINI_API_KEY và các thông tin cần thiết
 
@@ -55,6 +55,7 @@ Tài liệu API (Swagger UI): http://localhost:8000/docs
 
 ```bash
 cd frontend
+# Cấu hình biến môi trường (nếu đã có file .env thì bỏ qua lệnh này để tránh đè lên file cũ)
 cp .env.example .env
 npm install
 npm run dev
