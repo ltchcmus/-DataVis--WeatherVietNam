@@ -3,22 +3,28 @@
 
 :root {
   /* Premium Glassmorphism Theme (Light/Airy) */
-  --bg-main: #F4F7FB;         /* Soft ambient background */
+  --bg-main: #F4F7FB;
+  /* Soft ambient background */
   --bg-gradient: linear-gradient(135deg, #F4F7FB 0%, #E2E8F0 100%);
-  --bg-panel: rgba(255, 255, 255, 0.7); /* Translucent */
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  /* Translucent */
   --bg-panel-solid: #FFFFFF;
-  --text-primary: #0F172A;    /* Slate 900 */
-  --text-secondary: #475569;  /* Slate 600 - darker for readability */
-  --border-color: rgba(255, 255, 255, 0.4); /* Glass border */
+  --text-primary: #0F172A;
+  /* Slate 900 */
+  --text-secondary: #475569;
+  /* Slate 600 - darker for readability */
+  --border-color: rgba(255, 255, 255, 0.4);
+  /* Glass border */
   --border-solid: #E2E8F0;
-  
+
   /* Semantic Colors - Vibrant Gradients */
-  --accent-color: #3B82F6;    /* Blue 500 */
+  --accent-color: #3B82F6;
+  /* Blue 500 */
   --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-  --accent-hover: #2563EB;    
-  --success-color: #10B981;   
-  --danger-color: #EF4444;    
-  
+  --accent-hover: #2563EB;
+  --success-color: #10B981;
+  --danger-color: #EF4444;
+
   /* Weather & AQI Semantic Colors - Modern */
   --temp-cold: #0EA5E9;
   --temp-mean: #F59E0B;
@@ -36,13 +42,14 @@
   --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  
+
   /* Glass Effects */
   --glass-blur: blur(16px);
   --glass-border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
-body, html {
+body,
+html {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -75,19 +82,21 @@ body, html {
   position: relative;
   z-index: 10;
 }
-.resize-handle:hover, .resize-handle:active {
+
+.resize-handle:hover,
+.resize-handle:active {
   background-color: var(--accent-color);
 }
 
 .ai-assistant-panel {
-  flex: 3; 
+  flex: 3;
   display: flex;
   flex-direction: column;
   background-color: rgba(255, 255, 255, 0.85);
   backdrop-filter: var(--glass-blur);
   position: relative;
   height: 100vh;
-  box-shadow: -4px 0 15px rgba(0,0,0,0.03);
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.03);
 }
 
 /* Header */
@@ -136,6 +145,7 @@ body, html {
   box-shadow: var(--shadow-sm);
   transition: all 0.2s;
 }
+
 .filter-select:hover {
   border-color: var(--accent-color);
 }
@@ -160,7 +170,8 @@ body, html {
   font-weight: 600;
   padding: 0.75rem 1.25rem;
   cursor: pointer;
-  border-radius: 999px; /* Pill shape */
+  border-radius: 999px;
+  /* Pill shape */
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -195,8 +206,15 @@ body, html {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Generic Card Style - Glassmorphism */
@@ -210,6 +228,7 @@ body, html {
   border: var(--glass-border);
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
+
 .card-base:hover {
   box-shadow: var(--shadow-md);
 }
@@ -226,18 +245,42 @@ body, html {
   border: var(--glass-border);
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
+
 .kpi-card:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-3px);
 }
+
 .kpi-card-inner {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 }
-.kpi-content h3 { margin: 0; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-.kpi-content p { margin: 0; font-size: 2rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.025em; }
-.kpi-subvalue { font-size: 0.85rem; font-weight: 600; display: block; margin-top: 0.5rem; }
+
+.kpi-content h3 {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-content p {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+}
+
+.kpi-subvalue {
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: block;
+  margin-top: 0.5rem;
+}
+
 .kpi-icon {
   background-color: var(--bg-main);
   padding: 0.75rem;
@@ -282,8 +325,13 @@ body, html {
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
-  .kpi-card { grid-column: span 6; }
-  .half-chart { grid-column: span 12; }
+  .kpi-card {
+    grid-column: span 6;
+  }
+
+  .half-chart {
+    grid-column: span 12;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════ */
@@ -353,6 +401,7 @@ body, html {
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
+
 .stat-tile:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
@@ -439,7 +488,9 @@ body, html {
   color: #0F172A;
 }
 
-.m-0 { margin: 0 !important; }
+.m-0 {
+  margin: 0 !important;
+}
 
 /* Metric Toggle (AQI vs Temp) */
 .metric-toggle {
@@ -462,7 +513,11 @@ body, html {
   transition: all 0.15s ease;
   font-family: inherit;
 }
-.toggle-btn:hover { color: #0F172A; }
+
+.toggle-btn:hover {
+  color: #0F172A;
+}
+
 .toggle-btn.active {
   background: #ffffff;
   color: #0F172A;
@@ -720,7 +775,7 @@ body, html {
   color: #ffffff;
   min-width: 32px;
   text-align: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* ── Section 3: Extra Charts Grid ───────────────────────────────── */
@@ -746,8 +801,13 @@ body, html {
   border: 1px solid #DBEAFE;
 }
 
-.text-right { text-align: right; }
-.text-center { text-align: center; }
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
 
 /* ── Custom Rich Leaflet Tooltip Styling ──────────────────────── */
 .leaflet-tooltip.custom-leaflet-tooltip {
@@ -757,6 +817,7 @@ body, html {
   box-shadow: none !important;
   padding: 0 !important;
 }
+
 .leaflet-tooltip-top.custom-leaflet-tooltip::before {
   border-top-color: #ffffff !important;
 }
@@ -799,7 +860,7 @@ body, html {
   color: #ffffff;
   padding: 0.18rem 0.55rem;
   border-radius: 9999px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 .rich-tooltip-banner {
@@ -881,6 +942,7 @@ body, html {
     opacity: 0;
     transform: scale(0.96) translateY(4px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -1044,6 +1106,7 @@ body, html {
     opacity: 0;
     transform: scale(0.96) translateY(4px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -1273,26 +1336,56 @@ body, html {
   font-weight: 500;
 }
 
-.corr-text.pos { color: #166534; }
-.corr-text.neg { color: #991B1B; }
-.corr-text.neu { color: #475569; }
+.corr-text.pos {
+  color: #166534;
+}
+
+.corr-text.neg {
+  color: #991B1B;
+}
+
+.corr-text.neu {
+  color: #475569;
+}
 
 /* Responsive Breakpoints */
 @media (max-width: 1200px) {
-  .insights-grid { grid-template-columns: 1fr; }
-  .correlation-matrix-grid { grid-template-columns: 1fr; }
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .correlation-matrix-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 1024px) {
-  .top-viz-grid { grid-template-columns: 1fr; }
-  .ranking-tables-grid { grid-template-columns: 1fr; }
-  .extra-charts-grid { grid-template-columns: 1fr; }
-  .trend-charts-grid { grid-template-columns: 1fr; }
+  .top-viz-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-tables-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .extra-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trend-charts-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
-  .stat-row { grid-template-columns: 1fr; }
-  .filter-row { flex-direction: column; align-items: stretch; }
+  .stat-row {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════ */
@@ -1362,8 +1455,15 @@ body, html {
 .comparison-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.25rem;
-  align-items: start;
+  row-gap: 3.5rem;
+  column-gap: 1.25rem;
+  align-items: stretch;
+}
+
+.comparison-grid>.chart-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .comparison-card-wide {
@@ -1378,11 +1478,15 @@ body, html {
   width: 100%;
   overflow-x: auto;
   padding-bottom: 0.25rem;
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .boxplot-svg {
   width: 100%;
-  min-width: 780px;
+  height: auto;
+  min-width: 0;
   display: block;
 }
 
@@ -1401,9 +1505,10 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 520px;
+  max-height: 480px;
   overflow: auto;
   padding-right: 2px;
+  flex: 1;
 }
 
 .heatmap-row {
@@ -1421,7 +1526,7 @@ body, html {
   background: #ffffff;
 }
 
-.heatmap-head > div {
+.heatmap-head>div {
   color: #64748B;
   font-size: 0.66rem;
   font-weight: 700;
@@ -1461,7 +1566,8 @@ body, html {
 
 .comparison-chart-frame {
   width: 100%;
-  height: 340px;
+  min-height: 400px;
+  flex: 1;
 }
 
 .province-tooltip .viz-tooltip-value {
@@ -1476,7 +1582,8 @@ body, html {
 
 .top10-chart-frame {
   width: 100%;
-  height: 420px;
+  min-height: 440px;
+  flex: 1;
 }
 
 .top10-bar-label {
@@ -1500,7 +1607,9 @@ body, html {
     overflow-x: auto;
   }
 
-  .heatmap-row { min-width: 560px; }
+  .heatmap-row {
+    min-width: 560px;
+  }
 }
 
 /* Radar Chart styles */
@@ -1526,13 +1635,23 @@ body, html {
 
 /* ── Skeleton Loading Animation & Glassmorphism Styles ─────────────── */
 @keyframes skeletonShimmer {
-  0% { background-position: -300px 0; }
-  100% { background-position: calc(300px + 100%) 0; }
+  0% {
+    background-position: -300px 0;
+  }
+
+  100% {
+    background-position: calc(300px + 100%) 0;
+  }
 }
 
 @keyframes spinSlow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .dashboard-skeleton-container {
@@ -1686,5 +1805,3 @@ body, html {
 .radar-tooltip {
   min-width: 140px;
 }
-
-
