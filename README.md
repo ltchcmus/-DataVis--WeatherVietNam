@@ -38,7 +38,8 @@ pip install -r requirements.txt
 
 # Cấu hình biến môi trường (nếu đã có file .env thì bỏ qua lệnh này để tránh đè lên file cũ)
 cp .env.example .env
-# Chỉnh sửa file .env với GEMINI_API_KEY và các thông tin cần thiết
+# Chỉnh sửa file .env với GEMINI_API_KEYS và các thông tin cần thiết
+# VD: GEMINI_API_KEYS=key1,key2,key3
 
 # Khởi tạo Database và chạy Pipeline lần đầu tiên (đối với database mới)
 python init_supabase.py
