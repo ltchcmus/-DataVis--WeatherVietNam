@@ -112,9 +112,9 @@ function BoxplotChart({ data }) {
   const values = data.flatMap(d => [d.min, d.max]);
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
-  const width = 980;
+  const width = 620;
   const rowHeight = 32;
-  const margin = { top: 28, right: 48, bottom: 42, left: 150 };
+  const margin = { top: 28, right: 24, bottom: 42, left: 95 };
   const plotWidth = width - margin.left - margin.right;
   const height = margin.top + margin.bottom + rowHeight * data.length;
   const xScale = value => margin.left + normalize(value, minValue, maxValue) * plotWidth;
@@ -152,7 +152,7 @@ function BoxplotChart({ data }) {
           return (
             <g key={row.province} tabIndex="0">
               <title>{`${row.province}: min ${row.min.toFixed(1)}°C, Q1 ${row.q1.toFixed(1)}°C, median ${row.median.toFixed(1)}°C, Q3 ${row.q3.toFixed(1)}°C, max ${row.max.toFixed(1)}°C`}</title>
-              <text x={margin.left - 12} y={y + 4} textAnchor="end" className="boxplot-label">
+              <text x={margin.left - 10} y={y + 4} textAnchor="end" className="boxplot-label">
                 {row.province}
               </text>
               <line x1={xScale(row.min)} x2={xScale(row.max)} y1={y} y2={y} stroke="#52514e" strokeWidth="2" />
@@ -551,11 +551,15 @@ const ProvinceComparisonTab = () => {
         </figure>
 
         <div className="chart-card ranking-section comparison-ranking">
-          <div className="ranking-section-header-flex">
-            <div className="ranking-section-title">
-              <h2>{rankingTitle}</h2>
-              <p className="ranking-section-subtitle">Đổi biến để trả lời nhanh tỉnh nóng, mưa nhiều, AQI tốt, ẩm cao hoặc gió mạnh.</p>
+          <div className="chart-card-header">
+            <div className="chart-title-flex">
+              <BarChart3 size={18} color="#2563EB" />
+              <h3 className="chart-card-title m-0">{rankingTitle}</h3>
             </div>
+            <span className="chart-subtitle-badge">Xếp hạng Top 10</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.25rem' }}>
             <div className="metric-toggle">
               {METRICS.map(metric => (
                 <button

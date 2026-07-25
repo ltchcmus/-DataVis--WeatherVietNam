@@ -1485,7 +1485,8 @@ html {
 
 .boxplot-svg {
   width: 100%;
-  min-width: 780px;
+  height: auto;
+  min-width: 0;
   display: block;
 }
 
