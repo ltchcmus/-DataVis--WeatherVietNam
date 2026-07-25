@@ -474,6 +474,19 @@ const OverviewTab = () => {
       .slice(0, 8);
   }, [provinceRows, rankingMetric]);
 
+  const filteredObservationCount = useMemo(
+    () => provinceRows.reduce((sum, row) => sum + (Number(row.count) || 0), 0),
+    [provinceRows],
+  );
+
+  const resetAllFilters = () => {
+    setSelectedRegion('all');
+    setSelectedProvince('all');
+    setTimePreset('all');
+    setCustomStart('');
+    setCustomEnd('');
+  };
+
   if (loading) return <DashboardSkeleton message="Đang kết nối Supabase & đồng bộ dữ liệu thời tiết Việt Nam..." />;
   if (error) return <div className="overview-empty"><p>Lỗi: {error}</p></div>;
 
@@ -500,6 +513,43 @@ const OverviewTab = () => {
 
   return (
     <div className="overview-tab">
+      <style>{`
+        .dashboard-filter-bar {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-end;
+          gap: 10px 16px;
+          padding: 12px 14px;
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
+          border-radius: 12px;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        }
+        .dashboard-filter-actions {
+          margin-left: auto;
+          display: flex;
+          align-items: center;
+          gap: 9px;
+        }
+        @media (max-width: 1180px) {
+          .dashboard-filter-actions {
+            margin-left: 0;
+          }
+        }
+        @media (max-width: 760px) {
+          .dashboard-filter-bar {
+            align-items: stretch;
+          }
+          .dashboard-filter-bar .filter-group {
+            width: 100%;
+          }
+          .dashboard-filter-actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+        }
+      `}</style>
+
 
       {/* ── Floating Rich Tooltip for Table Rows ──────────────────── */}
       {hoveredTableRow && (
@@ -518,20 +568,22 @@ const OverviewTab = () => {
       )}
 
       {/* ── Filter Row ────────────────────────────────────────────── */}
-      <div className="filter-row" id="overview-filters">
+      <section className="dashboard-filter-bar" id="overview-filters">
         <div className="filter-group">
           <label className="filter-label" htmlFor="filter-region">Phân vùng</label>
           <select
             id="filter-region"
             className="filter-select"
             value={selectedRegion}
-            onChange={e => {
-              setSelectedRegion(e.target.value);
+            onChange={event => {
+              setSelectedRegion(event.target.value);
               setSelectedProvince('all');
             }}
           >
             <option value="all">Tất cả các vùng</option>
-            {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+            {REGIONS.map(region => (
+              <option key={region} value={region}>{region}</option>
+            ))}
           </select>
         </div>
 
@@ -541,46 +593,53 @@ const OverviewTab = () => {
             id="filter-province"
             className="filter-select"
             value={selectedProvince}
-            onChange={e => setSelectedProvince(e.target.value)}
+            onChange={event => setSelectedProvince(event.target.value)}
           >
             <option value="all">Tất cả tỉnh/thành</option>
-            {filteredProvinces.map(p => <option key={p} value={p}>{p}</option>)}
+            {filteredProvinces.map(province => (
+              <option key={province} value={province}>{province}</option>
+            ))}
           </select>
         </div>
 
-        {/* Date Range Preset Toggle (Default: 7 ngày gần nhất) */}
         <div className="filter-group">
           <label className="filter-label">Khoảng thời gian</label>
           <div className="metric-toggle">
-            <button className={`toggle-btn ${timePreset === '7d' ? 'active' : ''}`} onClick={() => setTimePreset('7d')}>7 ngày</button>
-            <button className={`toggle-btn ${timePreset === '30d' ? 'active' : ''}`} onClick={() => setTimePreset('30d')}>30 ngày</button>
-            <button className={`toggle-btn ${timePreset === '90d' ? 'active' : ''}`} onClick={() => setTimePreset('90d')}>90 ngày</button>
-            <button className={`toggle-btn ${timePreset === 'all' ? 'active' : ''}`} onClick={() => setTimePreset('all')}>Tất cả</button>
-            <button className={`toggle-btn ${timePreset === 'custom' ? 'active' : ''}`} onClick={() => setTimePreset('custom')}>Tùy chỉnh</button>
+            <button type="button" className={`toggle-btn ${timePreset === '7d' ? 'active' : ''}`} onClick={() => setTimePreset('7d')}>7 ngày</button>
+            <button type="button" className={`toggle-btn ${timePreset === '30d' ? 'active' : ''}`} onClick={() => setTimePreset('30d')}>30 ngày</button>
+            <button type="button" className={`toggle-btn ${timePreset === '90d' ? 'active' : ''}`} onClick={() => setTimePreset('90d')}>90 ngày</button>
+            <button type="button" className={`toggle-btn ${timePreset === 'all' ? 'active' : ''}`} onClick={() => setTimePreset('all')}>Tất cả</button>
+            <button type="button" className={`toggle-btn ${timePreset === 'custom' ? 'active' : ''}`} onClick={() => setTimePreset('custom')}>Tùy chỉnh</button>
           </div>
         </div>
 
-        {/* Custom Date Pickers */}
         {timePreset === 'custom' && (
           <div className="filter-group-custom-dates">
             <input
               type="date"
               className="filter-date-input"
               value={customStart}
-              onChange={e => setCustomStart(e.target.value)}
-              placeholder="Từ ngày"
+              onChange={event => setCustomStart(event.target.value)}
             />
-            <span className="date-sep">-</span>
+            <span className="date-sep">đến</span>
             <input
               type="date"
               className="filter-date-input"
               value={customEnd}
-              onChange={e => setCustomEnd(e.target.value)}
-              placeholder="Đến ngày"
+              onChange={event => setCustomEnd(event.target.value)}
             />
           </div>
         )}
-      </div>
+
+        <div className="dashboard-filter-actions">
+          <button type="button" className="toggle-btn" onClick={resetAllFilters}>
+            <Filter size={14} /> Xóa lọc
+          </button>
+          <span className="chart-subtitle-badge">
+            {filteredObservationCount.toLocaleString('vi-VN')} quan sát
+          </span>
+        </div>
+      </section>
 
       {/* ── SECTION 1: KPI Stat Tiles Row ─────────────────────────── */}
       {kpis && (

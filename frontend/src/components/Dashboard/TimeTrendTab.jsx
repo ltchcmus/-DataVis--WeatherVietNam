@@ -217,12 +217,18 @@ const TimeTrendTab = () => {
         'Gió Max TB':   +(g.windSum / g.count).toFixed(1),
       };
     });
-  }, [data, selectedProvince, dates, timePreset, customStart, customEnd, granularity]);
+  }, [data, selectedRegion, selectedProvince, dates, timePreset, customStart, customEnd, granularity]);
 
   /* ── Chart 4 Tier Distribution per Grouped Period & Metric ──────── */
   const chart4Distribution = useMemo(() => {
     if (!data.length) return [];
-    let filtered = selectedProvince === 'all' ? data : data.filter(r => r.province === selectedProvince);
+    let filtered = data;
+    if (selectedRegion !== 'all') {
+      filtered = filtered.filter(r => getRegionByProvince(r.province) === selectedRegion);
+    }
+    if (selectedProvince !== 'all') {
+      filtered = filtered.filter(r => r.province === selectedProvince);
+    }
 
     if (dates.length > 0) {
       if (timePreset === '7d') {
@@ -263,7 +269,7 @@ const TimeTrendTab = () => {
     });
 
     return Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date));
-  }, [data, selectedProvince, dates, timePreset, customStart, customEnd, granularity, chart4Metric]);
+  }, [data, selectedRegion, selectedProvince, dates, timePreset, customStart, customEnd, granularity, chart4Metric]);
 
   const activeChart4Tiers = useMemo(() => {
     if (chart4Metric === 'aqi') return AQI_TIERS;
@@ -301,6 +307,50 @@ const TimeTrendTab = () => {
     };
   }, [timeSeriesData]);
 
+  const filteredObservationCount = useMemo(() => {
+    let rows = data;
+
+    if (selectedRegion !== 'all') {
+      rows = rows.filter(row => getRegionByProvince(row.province) === selectedRegion);
+    }
+    if (selectedProvince !== 'all') {
+      rows = rows.filter(row => row.province === selectedProvince);
+    }
+
+    if (timePreset === '7d') {
+      const recentDates = new Set(dates.slice(-7));
+      rows = rows.filter(row => recentDates.has(row.date));
+    } else if (timePreset === '30d') {
+      const recentDates = new Set(dates.slice(-30));
+      rows = rows.filter(row => recentDates.has(row.date));
+    } else if (timePreset === '90d') {
+      const recentDates = new Set(dates.slice(-90));
+      rows = rows.filter(row => recentDates.has(row.date));
+    } else if (timePreset === 'custom') {
+      if (customStart) rows = rows.filter(row => row.date >= customStart);
+      if (customEnd) rows = rows.filter(row => row.date <= customEnd);
+    }
+
+    return rows.length;
+  }, [
+    data,
+    dates,
+    selectedRegion,
+    selectedProvince,
+    timePreset,
+    customStart,
+    customEnd,
+  ]);
+
+  const resetAllFilters = () => {
+    setSelectedRegion('all');
+    setSelectedProvince('all');
+    setGranularity('day');
+    setTimePreset('all');
+    setCustomStart('');
+    setCustomEnd('');
+  };
+
   if (loading) return <DashboardSkeleton message="Đang kết nối Supabase & tổng hợp chuỗi thời gian..." />;
   if (error) return <div className="overview-empty"><p>Lỗi: {error}</p></div>;
 
@@ -309,102 +359,126 @@ const TimeTrendTab = () => {
 
   return (
     <div className="time-trend-tab">
+      <style>{`
+        .dashboard-filter-bar {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-end;
+          gap: 10px 16px;
+          padding: 12px 14px;
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
+          border-radius: 12px;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        }
+        .dashboard-filter-actions {
+          margin-left: auto;
+          display: flex;
+          align-items: center;
+          gap: 9px;
+        }
+        @media (max-width: 1180px) {
+          .dashboard-filter-actions {
+            margin-left: 0;
+          }
+        }
+        @media (max-width: 760px) {
+          .dashboard-filter-bar {
+            align-items: stretch;
+          }
+          .dashboard-filter-bar .filter-group {
+            width: 100%;
+          }
+          .dashboard-filter-actions {
+            width: 100%;
+            justify-content: space-between;
+          }
+        }
+      `}</style>
+
 
       {/* ── Filter Controls Row ────────────────────────────────────── */}
-      <div className="filter-row-complex">
-        
-        {/* Region Filter */}
+      <section className="dashboard-filter-bar" id="time-trend-filters">
         <div className="filter-group">
-          <label className="filter-label" htmlFor="time-filter-region">
-            Phân vùng
-          </label>
+          <label className="filter-label" htmlFor="time-filter-region">Phân vùng</label>
           <select
             id="time-filter-region"
             className="filter-select"
             value={selectedRegion}
-            onChange={e => {
-              setSelectedRegion(e.target.value);
+            onChange={event => {
+              setSelectedRegion(event.target.value);
               setSelectedProvince('all');
             }}
           >
             <option value="all">Tất cả các vùng</option>
-            {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+            {REGIONS.map(region => (
+              <option key={region} value={region}>{region}</option>
+            ))}
           </select>
         </div>
 
-        {/* Province Filter */}
         <div className="filter-group">
-          <label className="filter-label" htmlFor="time-filter-province">
-            Tỉnh / Thành phố
-          </label>
+          <label className="filter-label" htmlFor="time-filter-province">Tỉnh / Thành phố</label>
           <select
             id="time-filter-province"
             className="filter-select"
             value={selectedProvince}
-            onChange={e => setSelectedProvince(e.target.value)}
+            onChange={event => setSelectedProvince(event.target.value)}
           >
             <option value="all">Tất cả tỉnh/thành</option>
-            {filteredProvinces.map(p => <option key={p} value={p}>{p}</option>)}
+            {filteredProvinces.map(province => (
+              <option key={province} value={province}>{province}</option>
+            ))}
           </select>
         </div>
 
-        {/* Time Granularity Toggle */}
         <div className="filter-group">
           <label className="filter-label">Đơn vị nhóm thời gian</label>
           <div className="metric-toggle">
-            <button
-              className={`toggle-btn ${granularity === 'day' ? 'active' : ''}`}
-              onClick={() => setGranularity('day')}
-            >
-              Theo Ngày
-            </button>
-            <button
-              className={`toggle-btn ${granularity === 'week' ? 'active' : ''}`}
-              onClick={() => setGranularity('week')}
-            >
-              Theo Tuần
-            </button>
-            <button
-              className={`toggle-btn ${granularity === 'month' ? 'active' : ''}`}
-              onClick={() => setGranularity('month')}
-            >
-              Theo Tháng
-            </button>
+            <button type="button" className={`toggle-btn ${granularity === 'day' ? 'active' : ''}`} onClick={() => setGranularity('day')}>Theo ngày</button>
+            <button type="button" className={`toggle-btn ${granularity === 'week' ? 'active' : ''}`} onClick={() => setGranularity('week')}>Theo tuần</button>
+            <button type="button" className={`toggle-btn ${granularity === 'month' ? 'active' : ''}`} onClick={() => setGranularity('month')}>Theo tháng</button>
           </div>
         </div>
 
-        {/* Date Range Preset Toggle */}
         <div className="filter-group">
           <label className="filter-label">Khoảng thời gian</label>
           <div className="metric-toggle">
-            <button className={`toggle-btn ${timePreset === '7d' ? 'active' : ''}`} onClick={() => setTimePreset('7d')}>7 ngày</button>
-            <button className={`toggle-btn ${timePreset === '30d' ? 'active' : ''}`} onClick={() => setTimePreset('30d')}>30 ngày</button>
-            <button className={`toggle-btn ${timePreset === '90d' ? 'active' : ''}`} onClick={() => setTimePreset('90d')}>90 ngày</button>
-            <button className={`toggle-btn ${timePreset === 'all' ? 'active' : ''}`} onClick={() => setTimePreset('all')}>Tất cả</button>
-            <button className={`toggle-btn ${timePreset === 'custom' ? 'active' : ''}`} onClick={() => setTimePreset('custom')}>Tùy chỉnh</button>
+            <button type="button" className={`toggle-btn ${timePreset === '7d' ? 'active' : ''}`} onClick={() => setTimePreset('7d')}>7 ngày</button>
+            <button type="button" className={`toggle-btn ${timePreset === '30d' ? 'active' : ''}`} onClick={() => setTimePreset('30d')}>30 ngày</button>
+            <button type="button" className={`toggle-btn ${timePreset === '90d' ? 'active' : ''}`} onClick={() => setTimePreset('90d')}>90 ngày</button>
+            <button type="button" className={`toggle-btn ${timePreset === 'all' ? 'active' : ''}`} onClick={() => setTimePreset('all')}>Tất cả</button>
+            <button type="button" className={`toggle-btn ${timePreset === 'custom' ? 'active' : ''}`} onClick={() => setTimePreset('custom')}>Tùy chỉnh</button>
           </div>
         </div>
 
-        {/* Custom Date Pickers */}
         {timePreset === 'custom' && (
           <div className="filter-group-custom-dates">
             <input
               type="date"
               className="filter-date-input"
               value={customStart}
-              onChange={e => setCustomStart(e.target.value)}
+              onChange={event => setCustomStart(event.target.value)}
             />
             <span className="date-sep">đến</span>
             <input
               type="date"
               className="filter-date-input"
               value={customEnd}
-              onChange={e => setCustomEnd(e.target.value)}
+              onChange={event => setCustomEnd(event.target.value)}
             />
           </div>
         )}
 
-      </div>
+        <div className="dashboard-filter-actions">
+          <button type="button" className="toggle-btn" onClick={resetAllFilters}>
+            <Filter size={14} /> Xóa lọc
+          </button>
+          <span className="chart-subtitle-badge">
+            {filteredObservationCount.toLocaleString('vi-VN')} quan sát
+          </span>
+        </div>
+      </section>
 
       {/* ── SECTION 1: Stat Summary Cards ──────────────────────────── */}
       {kpis && (
