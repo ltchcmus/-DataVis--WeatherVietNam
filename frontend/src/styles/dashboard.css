@@ -1,44 +1,61 @@
 /* frontend/src/styles/dashboard.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Premium Light Theme */
-  --bg-main: #F1F5F9;         /* Slate 100 */
-  --bg-panel: #FFFFFF;        
-  --text-primary: #0F172A;    /* Slate 900 */
-  --text-secondary: #64748B;  /* Slate 500 */
-  --border-color: #E2E8F0;    /* Slate 200 */
-  
-  /* Semantic Colors */
-  --accent-color: #3B82F6;    /* Blue 500 */
-  --accent-hover: #2563EB;    
-  --success-color: #10B981;   
-  --danger-color: #EF4444;    
-  
-  /* Weather & AQI Semantic Colors */
-  --temp-cold: #3B82F6;
+  /* Premium Glassmorphism Theme (Light/Airy) */
+  --bg-main: #F4F7FB;
+  /* Soft ambient background */
+  --bg-gradient: linear-gradient(135deg, #F4F7FB 0%, #E2E8F0 100%);
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  /* Translucent */
+  --bg-panel-solid: #FFFFFF;
+  --text-primary: #0F172A;
+  /* Slate 900 */
+  --text-secondary: #475569;
+  /* Slate 600 - darker for readability */
+  --border-color: rgba(255, 255, 255, 0.4);
+  /* Glass border */
+  --border-solid: #E2E8F0;
+
+  /* Semantic Colors - Vibrant Gradients */
+  --accent-color: #3B82F6;
+  /* Blue 500 */
+  --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  --accent-hover: #2563EB;
+  --success-color: #10B981;
+  --danger-color: #EF4444;
+
+  /* Weather & AQI Semantic Colors - Modern */
+  --temp-cold: #0EA5E9;
   --temp-mean: #F59E0B;
   --temp-hot: #EF4444;
-  --rain: #0EA5E9;
+  --rain: #0284C7;
   --wind: #8B5CF6;
-  --humidity: #10B981;
+  --humidity: #059669;
 
   --aqi-good: #10B981;
   --aqi-moderate: #FBBF24;
   --aqi-unhealthy-sensitive: #F97316;
   --aqi-unhealthy: #EF4444;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  /* Premium Soft Shadows */
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Glass Effects */
+  --glass-blur: blur(16px);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
-body, html {
+body,
+html {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: 'Inter', -apple-system, sans-serif;
-  background-color: var(--bg-main);
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  background: var(--bg-gradient);
+  background-attachment: fixed;
   color: var(--text-primary);
 }
 
@@ -52,36 +69,40 @@ body, html {
 .dashboard-panel {
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-main);
+  background: transparent;
   overflow-y: auto;
   height: 100%;
 }
 
 .resize-handle {
   width: 8px;
-  background-color: var(--border-color);
+  background-color: transparent;
   cursor: col-resize;
   transition: background-color 0.2s;
   position: relative;
   z-index: 10;
 }
-.resize-handle:hover, .resize-handle:active {
+
+.resize-handle:hover,
+.resize-handle:active {
   background-color: var(--accent-color);
 }
 
 .ai-assistant-panel {
-  flex: 3; 
+  flex: 3;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-panel);
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: var(--glass-blur);
   position: relative;
   height: 100vh;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.03);
 }
 
 /* Header */
 .dashboard-header {
   padding: 1.5rem 2rem 0.5rem;
-  background-color: var(--bg-main);
+  background: transparent;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -95,15 +116,19 @@ body, html {
 .dashboard-title {
   margin: 0 0 0.25rem 0;
   font-size: 1.75rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.025em;
+  background: linear-gradient(135deg, #1E293B, #3B82F6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .dashboard-subtitle {
   margin: 0;
   color: var(--text-secondary);
   font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .filter-select {
@@ -120,6 +145,7 @@ body, html {
   box-shadow: var(--shadow-sm);
   transition: all 0.2s;
 }
+
 .filter-select:hover {
   border-color: var(--accent-color);
 }
@@ -128,36 +154,40 @@ body, html {
 .dashboard-tabs-container {
   padding: 1rem 2rem 0;
   border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-main);
+  background: transparent;
 }
 
 .dashboard-tabs {
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .tab-btn {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
+  border-radius: 999px;
+  /* Pill shape */
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 0.5rem;
 }
 
 .tab-btn:hover {
   color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .tab-btn.active {
-  color: var(--accent-color);
-  border-bottom-color: var(--accent-color);
+  color: white;
+  background: var(--accent-gradient);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 /* Content & Grid */
@@ -176,19 +206,29 @@ body, html {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Generic Card Style */
+/* Generic Card Style - Glassmorphism */
 .card-base {
   background: var(--bg-panel);
-  border-radius: 1rem;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1.25rem;
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: box-shadow 0.2s, transform 0.2s;
+  border: var(--glass-border);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
+
 .card-base:hover {
   box-shadow: var(--shadow-md);
 }
@@ -197,24 +237,50 @@ body, html {
 .kpi-card {
   grid-column: span 3;
   background: var(--bg-panel);
-  border-radius: 1rem;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1.25rem;
   padding: 1.25rem 1.5rem;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: box-shadow 0.2s, transform 0.2s;
+  border: var(--glass-border);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
+
 .kpi-card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
+
 .kpi-card-inner {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 }
-.kpi-content h3 { margin: 0; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-.kpi-content p { margin: 0; font-size: 2rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.025em; }
-.kpi-subvalue { font-size: 0.85rem; font-weight: 600; display: block; margin-top: 0.5rem; }
+
+.kpi-content h3 {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-content p {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+}
+
+.kpi-subvalue {
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: block;
+  margin-top: 0.5rem;
+}
+
 .kpi-icon {
   background-color: var(--bg-main);
   padding: 0.75rem;
@@ -228,20 +294,24 @@ body, html {
 .trend-chart {
   grid-column: span 12;
   background: var(--bg-panel);
-  border-radius: 1rem;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1.25rem;
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
+  border: var(--glass-border);
   min-height: 400px;
 }
 
 .half-chart {
   grid-column: span 6;
   background: var(--bg-panel);
-  border-radius: 1rem;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1.25rem;
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
+  border: var(--glass-border);
   min-height: 350px;
 }
 
@@ -255,6 +325,1483 @@ body, html {
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
-  .kpi-card { grid-column: span 6; }
-  .half-chart { grid-column: span 12; }
+  .kpi-card {
+    grid-column: span 6;
+  }
+
+  .half-chart {
+    grid-column: span 12;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/*  OVERVIEW TAB — Vietnam Weather & Environment Overview             */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+.overview-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Filter Row & Complex Filter Bar ─────────────────────────────── */
+.filter-row,
+.filter-row-complex {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  background: var(--bg-panel);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.filter-row:hover,
+.filter-row-complex:hover {
+  box-shadow: var(--shadow-md);
+  border-color: #CBD5E1;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.filter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── KPI Stat Tiles Row ────────────────────────────────────────── */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.stat-tile {
+  display: flex;
+  gap: 0.875rem;
+  align-items: flex-start;
+  background: var(--bg-panel);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1rem;
+  padding: 1.25rem 1.25rem;
+  border: var(--glass-border);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.stat-tile:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.stat-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 0.625rem;
+  flex-shrink: 0;
+}
+
+.stat-tile-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stat-tile-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.stat-tile-value {
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.stat-tile-delta {
+  font-size: 0.78rem;
+  color: #64748B;
+  margin-top: 0.35rem;
+  line-height: 1.35;
+}
+
+/* ── Top Viz Grid (Map 60% + Donut 40%) ───────────────────────── */
+.top-viz-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1.25rem;
+}
+
+.chart-card {
+  background: var(--bg-panel);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  border: var(--glass-border);
+  box-shadow: var(--shadow-sm);
+  margin: 0;
+}
+
+.map-container-card {
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  border-radius: 0.85rem;
+}
+
+.chart-header-overlay {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.25rem;
+  background: #ffffff;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.chart-header-overlay .chart-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.m-0 {
+  margin: 0 !important;
+}
+
+/* Metric Toggle (AQI vs Temp) */
+.metric-toggle {
+  display: flex;
+  background: #F1F5F9;
+  border-radius: 0.5rem;
+  padding: 3px;
+  gap: 2px;
+}
+
+.toggle-btn {
+  padding: 0.35rem 0.85rem;
+  border: none;
+  background: transparent;
+  border-radius: 0.375rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.toggle-btn:hover {
+  color: #0F172A;
+}
+
+.toggle-btn.active {
+  background: #ffffff;
+  color: #0F172A;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.map-wrap-rel {
+  position: relative;
+  width: 100%;
+  height: 440px;
+}
+
+/* Overlay Vertical AQI Legend on Bottom-Left of Map */
+.aqi-legend-overlay {
+  position: absolute;
+  bottom: 16px;
+  left: 14px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid #E2E8F0;
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 230px;
+}
+
+.legend-overlay-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0F172A;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.15rem;
+}
+
+.legend-overlay-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-color-strip {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legend-overlay-text {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #334155;
+  line-height: 1.2;
+}
+
+/* Donut Card */
+.donut-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.donut-wrap {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-center-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.donut-percentage {
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.donut-status {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748B;
+  margin-top: 0.25rem;
+  text-align: center;
+  max-width: 120px;
+}
+
+.donut-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #F1F5F9;
+}
+
+.donut-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+}
+
+.donut-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.donut-legend-label {
+  color: #475569;
+}
+
+.donut-legend-val {
+  font-weight: 600;
+  color: #0F172A;
+}
+
+/* ── Section 3: Live Rankings ──────────────────────────────────── */
+.ranking-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--bg-panel);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  border: var(--glass-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.ranking-section-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ranking-section-title h2 {
+  margin: 0 0 0.2rem 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.ranking-section-subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748B;
+}
+
+.ranking-tables-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.ranking-card {
+  background: #FAFAFA;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid #E2E8F0;
+}
+
+.ranking-card-header h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.ranking-card-header p {
+  margin: 0 0 1rem 0;
+  font-size: 0.8rem;
+  color: #64748B;
+}
+
+/* Ranking Table */
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ranking-table th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748B;
+  text-transform: uppercase;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #E2E8F0;
+  text-align: left;
+}
+
+.ranking-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #F1F5F9;
+  font-size: 0.88rem;
+  vertical-align: middle;
+}
+
+.ranking-table tr:last-child td {
+  border-bottom: none;
+}
+
+.rank-num {
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.province-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.province-flag {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.province-name {
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.aqi-badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.375rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  min-width: 32px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* ── Section 3: Extra Charts Grid ───────────────────────────────── */
+.extra-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.chart-title-flex {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-subtitle-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #2563EB;
+  background: #EFF6FF;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid #DBEAFE;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ── Custom Rich Leaflet Tooltip Styling ──────────────────────── */
+.leaflet-tooltip.custom-leaflet-tooltip {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.leaflet-tooltip-top.custom-leaflet-tooltip::before {
+  border-top-color: #ffffff !important;
+}
+
+.rich-tooltip-card {
+  background: #ffffff;
+  border-radius: 0.85rem;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 0.85rem 1rem;
+  min-width: 260px;
+  max-width: 290px;
+}
+
+.rich-tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.rich-tooltip-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.rich-tooltip-province {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.rich-tooltip-aqi-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ffffff;
+  padding: 0.18rem 0.55rem;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.rich-tooltip-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #F8FAFC;
+  border-radius: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.65rem;
+  border: 1px solid #F1F5F9;
+}
+
+.banner-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.banner-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.banner-condition-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.banner-temp-main {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.1;
+}
+
+/* 2x2 Metric Grid */
+.rich-tooltip-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 0.75rem;
+}
+
+.rich-metric-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rich-metric-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 0.68rem;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.metric-val {
+  font-size: 0.8rem;
+  color: #0F172A;
+  font-weight: 700;
+}
+
+.table-floating-card-popover {
+  animation: popoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.15));
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Hover effect on ranking table rows */
+.ranking-table-row {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ranking-table-row:hover {
+  background-color: #EFF6FF !important;
+}
+
+/* ── Donut Chart Enhancements ─────────────────────────────────── */
+.chart-header-simple {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.donut-hint-badge {
+  font-size: 0.72rem;
+  color: #64748B;
+  background: #F1F5F9;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+}
+
+.donut-count-sub {
+  font-size: 0.72rem;
+  color: #94A3B8;
+  font-weight: 500;
+  margin-top: 0.1rem;
+}
+
+/* Interactive Donut Legend Pills */
+.donut-legend-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #F1F5F9;
+}
+
+.donut-legend-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.5rem;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.donut-legend-pill:hover,
+.donut-legend-pill.active-pill {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.donut-legend-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+}
+
+/* Rich Recharts Legend Indicator */
+.rich-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-right: 1.25rem;
+  font-size: 0.82rem;
+}
+
+.legend-dot-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/*  TAB 2 — Biến động theo thời gian (TimeTrendTab)                   */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+.time-trend-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Filter Controls for Time Trend Tab */
+.filter-row-complex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  background: #ffffff;
+  border-radius: 0.85rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.filter-group-custom-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-date-input {
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.4rem;
+  border: 1px solid #CBD5E1;
+  font-size: 0.82rem;
+  font-family: inherit;
+  color: #0F172A;
+  background: #ffffff;
+}
+
+.date-sep {
+  font-size: 0.8rem;
+  color: #64748B;
+  font-weight: 500;
+}
+
+
+.trend-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+/* ── Custom Styled Recharts Hover Tooltip Card ──────────────────── */
+.viz-tooltip {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  min-width: 210px;
+  animation: tooltipCardFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+@keyframes tooltipCardFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.viz-tooltip-header {
+  margin-bottom: 0.2rem;
+}
+
+.viz-tooltip-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0F172A;
+  display: block;
+}
+
+.viz-tooltip-divider {
+  height: 1px;
+  background: #F1F5F9;
+  margin: 0.4rem 0;
+}
+
+.viz-tooltip-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.viz-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.viz-tooltip-key {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.viz-tooltip-metric {
+  color: #64748B;
+  font-weight: 500;
+}
+
+/* ── Infographic Tooltip Enhancements ───────────────────────────── */
+.infographic-tooltip {
+  border-top: 3px solid #2563EB;
+}
+
+.total-prov-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748B;
+  background: #F1F5F9;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  margin-left: auto;
+}
+
+.viz-tooltip-value-pill {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.35rem;
+  margin-left: auto;
+}
+
+.pct-progress-bar-wrap {
+  width: 50px;
+  height: 6px;
+  background: #F1F5F9;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin: 0 0.4rem;
+}
+
+.pct-progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+
+.viz-tooltip-delta {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px dashed #CBD5E1;
+  font-size: 0.76rem;
+  color: #334155;
+}
+
+
+/* Analytical Insights Card */
+.trend-insights-card {
+  background: #ffffff;
+  border-radius: 0.85rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.insights-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.insights-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.insight-item {
+  display: flex;
+  gap: 0.75rem;
+  background: #F8FAFC;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #F1F5F9;
+}
+
+.insight-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.insight-body strong {
+  display: block;
+  font-size: 0.88rem;
+  color: #0F172A;
+  margin-bottom: 0.25rem;
+}
+
+.insight-body p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+/* Synced Multi-Metric Charts Stack */
+.synced-charts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Pearson Correlation Matrix Grid */
+.correlation-matrix-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  height: 100%;
+}
+
+.corr-card {
+  background: #F8FAFC;
+  border-radius: 0.65rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.corr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.corr-metrics {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.corr-badge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+}
+
+.corr-badge.pos {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #BBF7D0;
+}
+
+.corr-badge.neg {
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #FCA5A5;
+}
+
+.corr-desc {
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.corr-text {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 500;
+}
+
+.corr-text.pos {
+  color: #166534;
+}
+
+.corr-text.neg {
+  color: #991B1B;
+}
+
+.corr-text.neu {
+  color: #475569;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1200px) {
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .correlation-matrix-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .top-viz-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-tables-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .extra-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trend-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .stat-row {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/*  TAB 3 — So sánh giữa các tỉnh                                    */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+.province-comparison-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tab-intro-panel {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.85rem;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.tab-intro-panel h2 {
+  margin: 0.1rem 0 0.35rem;
+  font-size: 1.2rem;
+  color: #0F172A;
+}
+
+.tab-intro-panel p {
+  margin: 0;
+  color: #64748B;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.tab-kicker {
+  font-size: 0.75rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #2563EB !important;
+  font-weight: 700;
+}
+
+.compare-stat-row .stat-tile-value {
+  font-size: 1.2rem;
+  letter-spacing: 0;
+}
+
+.compare-hot {
+  background: rgba(235, 104, 52, 0.12);
+  color: #d95926;
+}
+
+.compare-rain {
+  background: rgba(42, 120, 214, 0.12);
+  color: #2a78d6;
+}
+
+.compare-clean {
+  background: rgba(27, 175, 122, 0.12);
+  color: #1baf7a;
+}
+
+.compare-wind {
+  background: rgba(74, 58, 167, 0.12);
+  color: #4a3aa7;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: 3.5rem;
+  column-gap: 1.25rem;
+  align-items: stretch;
+}
+
+.comparison-grid>.chart-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.comparison-card-wide {
+  grid-row: span 2;
+}
+
+.chart-card-header {
+  min-height: 34px;
+}
+
+.boxplot-scroll {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.boxplot-svg {
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  display: block;
+}
+
+.boxplot-label {
+  fill: #334155;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.boxplot-axis-text {
+  fill: #64748B;
+  font-size: 11px;
+}
+
+.heatmap-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 480px;
+  overflow: auto;
+  padding-right: 2px;
+  flex: 1;
+}
+
+.heatmap-row {
+  display: grid;
+  grid-template-columns: minmax(108px, 1.4fr) repeat(5, minmax(54px, 0.7fr));
+  gap: 4px;
+  align-items: stretch;
+  min-width: 580px;
+}
+
+.heatmap-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #ffffff;
+}
+
+.heatmap-head>div {
+  color: #64748B;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.45rem;
+}
+
+.heatmap-province {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  color: #1E293B;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.45rem;
+  background: #F8FAFC;
+  border-radius: 0.35rem;
+}
+
+.heatmap-cell {
+  min-height: 28px;
+  border-radius: 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.heatmap-cell:focus,
+.boxplot-svg g:focus {
+  outline: 2px solid #2a78d6;
+  outline-offset: 2px;
+}
+
+.comparison-chart-frame {
+  width: 100%;
+  min-height: 400px;
+  flex: 1;
+}
+
+.province-tooltip .viz-tooltip-value {
+  margin-left: auto;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.comparison-ranking {
+  gap: 1rem;
+}
+
+.top10-chart-frame {
+  width: 100%;
+  min-height: 440px;
+  flex: 1;
+}
+
+.top10-bar-label {
+  fill: #0F172A;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-card-wide {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .heatmap-table {
+    overflow-x: auto;
+  }
+
+  .heatmap-row {
+    min-width: 560px;
+  }
+}
+
+/* Radar Chart styles */
+.radar-selector-row {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem 0.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.radar-select-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.radar-select-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ── Skeleton Loading Animation & Glassmorphism Styles ─────────────── */
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -300px 0;
+  }
+
+  100% {
+    background-position: calc(300px + 100%) 0;
+  }
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.dashboard-skeleton-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.skeleton-box {
+  background: linear-gradient(90deg, #E2E8F0 0%, #F8FAFC 50%, #E2E8F0 100%);
+  background-size: 300px 100%;
+  animation: skeletonShimmer 1.5s infinite ease-in-out;
+  border-radius: 0.5rem;
+}
+
+.skeleton-circle {
+  border-radius: 50% !important;
+}
+
+.skeleton-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 100%);
+  border: 1px solid #DBEAFE;
+  border-radius: 0.875rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.skeleton-spinner-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 0.625rem;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+  flex-shrink: 0;
+}
+
+.skeleton-spinner-icon {
+  animation: spinSlow 1s linear infinite;
+}
+
+.skeleton-status-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.skeleton-status-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.skeleton-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #DBEAFE;
+  color: #1D4ED8;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.skeleton-status-sub {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748B;
+}
+
+.skeleton-filter-row {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.skeleton-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.skeleton-kpi-card {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.125rem 1.25rem;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.skeleton-kpi-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.skeleton-viz-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.skeleton-chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.875rem;
+  box-shadow: var(--shadow-sm);
+  min-height: 320px;
+}
+
+.skeleton-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skeleton-chart-body {
+  flex: 1;
+  width: 100%;
+  border-radius: 0.625rem;
+}
+
+.radar-select {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  border-radius: 0.375rem;
+}
+
+.radar-tooltip {
+  min-width: 140px;
 }

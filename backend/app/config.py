@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     gemini_base_backoff_seconds: float = 1.0
     gemini_max_backoff_seconds: float = 60.0
     gemini_max_history_turns: int = 15     # Giới hạn số lượt chat (1 lượt = 1 user + 1 assistant)
+    max_image_uploads: int = 4             # Giới hạn số lượng ảnh upload trong AI chat
 
     # === Database ===
     database_url: str
@@ -37,7 +38,11 @@ class Settings(BaseSettings):
     log_retention_days: int = 30
 
     # === Dataset ===
-    dataset_path: str = "data/dataset.csv"
+    dataset_path: str = "data/dataset7days.csv"   # 7 ngày gần nhất (default cho AI /execute)
+    dataset_7d_path: str = "data/dataset7days.csv"
+    dataset_30d_path: str = "data/dataset30days.csv"
+    dataset_90d_path: str = "data/dataset90days.csv"
+    dataset_all_path: str = "data/datasetall.csv"
     cities_scope: str = "vietnam"      # "vietnam" | "all"
 
     # === Pipeline ===

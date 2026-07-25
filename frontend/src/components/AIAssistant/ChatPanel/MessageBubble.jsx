@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import CodeBlock from './CodeBlock';
 import { User, Bot } from 'lucide-react';
 
-const MessageBubble = ({ message }) => {
+const MessageBubble = ({ message, onSuggestionClick }) => {
   const isUser = message.role === 'user';
 
   return (
@@ -24,6 +24,13 @@ const MessageBubble = ({ message }) => {
             </div>
           ) : (
             <>
+              {message.images && message.images.length > 0 && (
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                  {message.images.map((img, idx) => (
+                    <img key={idx} src={img} alt={`User uploaded ${idx}`} style={{ maxWidth: '200px', maxHeight: '200px', borderRadius: '8px', border: '1px solid var(--border-color)', objectFit: 'contain' }} />
+                  ))}
+                </div>
+              )}
               {message.content && (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.content}
@@ -51,7 +58,23 @@ const MessageBubble = ({ message }) => {
                 <div className="suggestions-list" style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <h4 style={{ margin: '0 0 0.25rem 0', color: 'var(--ai-text-secondary)', fontSize: '0.875rem' }}>💡 Gợi ý phân tích cho bạn:</h4>
                   {message.suggestions.map((suggestion, idx) => (
-                    <div key={idx} style={{ padding: '0.5rem 0.75rem', backgroundColor: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: '0.5rem', fontSize: '0.875rem', color: '#334155', lineHeight: '1.4' }}>
+                    <div 
+                      key={idx} 
+                      onClick={() => onSuggestionClick && onSuggestionClick(suggestion)}
+                      style={{ 
+                        padding: '0.5rem 0.75rem', 
+                        backgroundColor: '#F1F5F9', 
+                        border: '1px solid #E2E8F0', 
+                        borderRadius: '0.5rem', 
+                        fontSize: '0.875rem', 
+                        color: '#334155', 
+                        lineHeight: '1.4',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#E2E8F0'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
+                    >
                       {suggestion}
                     </div>
                   ))}

@@ -76,6 +76,7 @@ class LLMService:
         system_prompt: str,
         history: list[dict],
         user_message: str,
+        images: list[str] = None
     ) -> tuple[str, dict]:
         """
         Gọi Gemini (non-streaming). Round-robin keys, retry on transient errors.
@@ -89,6 +90,23 @@ class LLMService:
         exhausted_keys: set[str] = set()
         attempt = 0
 
+        # Construct message parts
+        message_parts = []
+        if images:
+            import base64
+            for b64_img in images:
+                try:
+                    mime_type = "image/jpeg"
+                    if b64_img.startswith("data:image"):
+                        mime_type = b64_img.split(";")[0].split(":")[1]
+                        b64_data = b64_img.split(",")[1]
+                    else:
+                        b64_data = b64_img
+                    message_parts.append({"mime_type": mime_type, "data": base64.b64decode(b64_data)})
+                except Exception as e:
+                    logger.warning(f"Failed to parse image for Gemini API: {e}")
+        message_parts.append(user_message)
+
         while True:
             key = next(self._key_cycle)
 
@@ -98,20 +116,16 @@ class LLMService:
 
             start = time.time()
             try:
-                model = self._get_model(key)
-                chat = model.start_chat(history=history)
-
                 # Inject system prompt vào user message (Gemini hỗ trợ system_instruction)
-                # Đã được set qua GenerativeModel constructor bên dưới, nhưng fallback
-                # là thêm vào đầu history nếu cần
                 model_with_system = genai.GenerativeModel(
                     model_name=settings.gemini_model,
                     system_instruction=system_prompt,
                     generation_config=GENERATION_CONFIG,
                     safety_settings=SAFETY_SETTINGS,
                 )
+                genai.configure(api_key=key)
                 chat = model_with_system.start_chat(history=history)
-                response = chat.send_message(user_message)
+                response = chat.send_message(message_parts)
 
                 latency_ms = int((time.time() - start) * 1000)
                 usage = {
@@ -154,6 +168,7 @@ class LLMService:
         system_prompt: str,
         history: list[dict],
         user_message: str,
+        images: list[str] = None
     ) -> Generator[str, None, None]:
         """
         Streaming generator — yield từng chunk text.
@@ -164,6 +179,23 @@ class LLMService:
             return
 
         exhausted_keys: set[str] = set()
+
+        # Construct message parts
+        message_parts = []
+        if images:
+            import base64
+            for b64_img in images:
+                try:
+                    mime_type = "image/jpeg"
+                    if b64_img.startswith("data:image"):
+                        mime_type = b64_img.split(";")[0].split(":")[1]
+                        b64_data = b64_img.split(",")[1]
+                    else:
+                        b64_data = b64_img
+                    message_parts.append({"mime_type": mime_type, "data": base64.b64decode(b64_data)})
+                except Exception as e:
+                    logger.warning(f"Failed to parse image for Gemini API (stream): {e}")
+        message_parts.append(user_message)
 
         while True:
             key = next(self._key_cycle)
@@ -180,7 +212,7 @@ class LLMService:
                 )
                 genai.configure(api_key=key)
                 chat = model.start_chat(history=history)
-                response = chat.send_message(user_message, stream=True)
+                response = chat.send_message(message_parts, stream=True)
 
                 for chunk in response:
                     try:

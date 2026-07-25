@@ -43,7 +43,34 @@ def _load_history_from_db(conversation_id: str, db: Session) -> list[dict]:
         history = []
         for m in msgs:
             gemini_role = "user" if m.role == "user" else "model"
-            history.append({"role": gemini_role, "parts": [m.content]})
+            parts = []
+            
+            # Nếu có ảnh cũ, cần nhét lại vào history dưới dạng inline_data
+            if m.images:
+                try:
+                    import base64
+                    images_list = json.loads(m.images)
+                    for b64_img in images_list:
+                        # Extract mime type
+                        mime_type = "image/jpeg"
+                        if b64_img.startswith("data:image"):
+                            mime_type = b64_img.split(";")[0].split(":")[1]
+                            b64_data = b64_img.split(",")[1]
+                        else:
+                            b64_data = b64_img
+                        parts.append({"mime_type": mime_type, "data": base64.b64decode(b64_data)})
+                except Exception as e:
+                    logger.warning(f"Failed to parse images from DB for message {m.id}: {e}")
+
+            # Xây dựng nội dung text từ content, code và explanation
+            text_content = m.content or ""
+            if m.code:
+                text_content += f"\n\n```python\n{m.code}\n```"
+            if m.explanation:
+                text_content += f"\n\nGiải thích:\n{m.explanation}"
+            
+            parts.append(text_content)
+            history.append({"role": gemini_role, "parts": parts})
         return history
     except Exception as e:
         logger.warning(f"Cannot load history from DB: {e}")
@@ -55,6 +82,7 @@ def _save_messages(
     conversation_id: str,
     user_message: str,
     response: ChatResponse,
+    images: list[str] = None
 ):
     """Lưu cả tin nhắn user lẫn assistant vào DB."""
     try:
@@ -69,11 +97,13 @@ def _save_messages(
         db.flush()
 
         # User message
+        images_str = json.dumps(images) if images else None
         db.add(ChatMessage(
             id=str(uuid.uuid4()),
             conversation_id=conversation_id,
             role="user",
             content=user_message,
+            images=images_str
         ))
 
         # Assistant message
@@ -145,6 +175,7 @@ class AIService:
                 system_prompt=system_prompt,
                 history=gemini_history,
                 user_message=request.message,
+                images=request.images
             )
         except RuntimeError as e:
             error_str = str(e)
@@ -176,7 +207,7 @@ class AIService:
 
         # Lưu messages vào DB
         if db:
-            _save_messages(db, conversation_id, request.message, chat_response)
+            _save_messages(db, conversation_id, request.message, chat_response, images=request.images)
 
         return chat_response
 

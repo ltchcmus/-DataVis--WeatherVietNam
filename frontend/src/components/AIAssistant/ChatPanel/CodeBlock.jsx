@@ -3,6 +3,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Copy, Check, Play, X, Edit2 } from 'lucide-react';
 import { aiService } from '../../../services/api';
+import Plot from 'react-plotly.js';
 
 const CodeBlock = ({ initialCode, conversationId, requestId }) => {
   const [copied, setCopied] = useState(false);
@@ -117,10 +118,31 @@ const CodeBlock = ({ initialCode, conversationId, requestId }) => {
           {execResult.status === 'success' && execResult.output_type === 'chart' && execResult.chart_base64 && (
             <img src={`data:image/png;base64,${execResult.chart_base64}`} alt="Chart result" style={{ maxWidth: '100%', height: 'auto', borderRadius: '0.5rem', border: '1px solid var(--ai-border-color)', marginTop: '0.5rem' }} />
           )}
+          
+          {execResult.status === 'success' && execResult.output_type === 'plotly' && execResult.result && (
+            <div style={{ marginTop: '0.5rem', width: '100%', minHeight: '400px', borderRadius: '0.5rem', border: '1px solid var(--ai-border-color)', backgroundColor: '#fff', overflow: 'hidden' }}>
+              {(() => {
+                try {
+                  const plotData = JSON.parse(execResult.result);
+                  return (
+                    <Plot
+                      data={plotData.data}
+                      layout={{ ...plotData.layout, autosize: true, margin: { l: 40, r: 20, t: 40, b: 40 } }}
+                      useResizeHandler={true}
+                      style={{ width: '100%', height: '100%', minHeight: '400px' }}
+                      config={{ responsive: true, displayModeBar: true }}
+                    />
+                  );
+                } catch (e) {
+                  return <div style={{ color: 'red', padding: '1rem' }}>Lỗi parse dữ liệu Plotly: {e.message}</div>;
+                }
+              })()}
+            </div>
+          )}
 
           {execResult.status === 'success' && execResult.output_type === 'text' && (
              <pre style={{ margin: 0, color: 'var(--ai-text-primary)', whiteSpace: 'pre-wrap', fontSize: '0.85rem', background: '#F8FAFC', padding: '0.75rem', borderRadius: '0.375rem' }}>
-               {execResult.logs?.join('\n') || "Thành công (không có output)"}
+               {execResult.logs?.join('\n') || "Thành công (không có output ở terminal)"}
              </pre>
           )}
 

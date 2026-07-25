@@ -44,6 +44,7 @@ class ChatMessage(Base):
     code = Column(Text, nullable=True)
     explanation = Column(Text, nullable=True)
     suggestions = Column(Text, nullable=True)           # JSON string
+    images = Column(Text, nullable=True)                # JSON string array of base64
     request_id = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

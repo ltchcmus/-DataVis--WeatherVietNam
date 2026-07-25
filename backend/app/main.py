@@ -18,6 +18,7 @@ from app.routers.execute import router as execute_router
 from app.routers.logs import router as logs_router
 from app.routers.history import router as history_router
 from app.routers.data import router as data_router
+from app.routers.csv_router import router as csv_router
 from app.utils.logger import get_logger, cleanup_old_logs
 
 logger = get_logger(__name__)
@@ -53,6 +54,23 @@ async def lifespan(app: FastAPI):
             logger.warning("Dataset not found — AI will work without dataset context")
     except Exception as e:
         logger.error(f"Failed to pre-load dataset: {e}")
+
+    # Initial CSV seed: tạo file CSV nếu chưa có (chạy lần đầu hoặc sau git clone)
+    try:
+        from pathlib import Path
+        _data_dir = Path("data")
+        csv_files = ["dataset7days.csv", "dataset30days.csv", "dataset90days.csv", "datasetall.csv"]
+        missing = [f for f in csv_files if not (_data_dir / f).exists()]
+        if missing:
+            logger.info(f"Missing CSV files: {missing} — triggering initial export...")
+            from app.pipeline.csv_manager import export_all_csvs
+            import asyncio
+            asyncio.get_event_loop().run_in_executor(None, export_all_csvs)
+            logger.info("CSV export triggered in background")
+        else:
+            logger.info(f"All {len(csv_files)} CSV presets available")
+    except Exception as e:
+        logger.warning(f"Initial CSV seed failed (non-critical): {e}")
 
     # Start APScheduler
     try:
@@ -131,6 +149,7 @@ app.include_router(execute_router)
 app.include_router(logs_router)
 app.include_router(history_router)
 app.include_router(data_router)
+app.include_router(csv_router)
 
 # Routers mới (sẽ được thêm ở Phase 5)
 try:
@@ -159,5 +178,6 @@ async def root():
 async def health():
     return {
         "status": "ok",
-        "enable_auto_execute": settings.enable_auto_execute
+        "enable_auto_execute": settings.enable_auto_execute,
+        "max_image_uploads": settings.max_image_uploads
     }

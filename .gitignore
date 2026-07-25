@@ -43,6 +43,11 @@ cong
 
 code.txt
 !package.json
-!dataset.csv
+!datasetall.csv
+!dataset7days.csv
+!dataset30days.csv
+!dataset90days.csv
 !VietNam.csv
 !cities_1500.csv
+
+docs/
