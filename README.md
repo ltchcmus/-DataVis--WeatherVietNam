@@ -9,7 +9,7 @@ Dự án được chia thành 3 phần chính:
 
 - **Backend (FastAPI)**: Đóng vai trò là hệ thống AI Data Analysis API. Backend chạy pipeline thu thập dữ liệu thời tiết tự động hằng ngày từ Open-Meteo Archive API và Air Quality API, lưu trữ vào Supabase, sau đó tạo caching sang `.csv` để tối ưu hóa hiệu suất truy vấn. Tích hợp AI (Gemini API) cung cấp các nhận định sâu sắc.
 - **Frontend (ReactJS + Vite)**: Hệ thống Dashboard và AI Assistant Panel.
-- **Report (`cong/report`)**: Chứa mã nguồn LaTeX dùng để biên dịch báo cáo chi tiết về dự án.
+- **EDA (Exploratory Data Analysis)**: Phân tích và trực quan hóa dữ liệu thời tiết Việt Nam.
 
 ## Cấu Trúc Thư Mục
 
