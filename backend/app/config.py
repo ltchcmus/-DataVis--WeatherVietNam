@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     # === Rate Limiting ===
     rate_limit_requests: int = 30
     rate_limit_window_seconds: int = 60
+    
+    global_ai_rate_limit_requests: int = 100
+    global_ai_rate_limit_window_seconds: int = 60
 
     # === Logging ===
     log_level: str = "INFO"

@@ -37,6 +37,35 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if r is None:
             return await call_next(request)
 
+        # 1. Global AI Rate Limit
+        if request.url.path.startswith("/ai"):
+            global_key = "rl:global:ai"
+            global_limit = getattr(settings, "global_ai_rate_limit_requests", 100)
+            global_window = getattr(settings, "global_ai_rate_limit_window_seconds", 60)
+
+            try:
+                pipe = r.pipeline()
+                pipe.incr(global_key)
+                pipe.ttl(global_key)
+                g_count, g_ttl = pipe.execute()
+
+                if g_ttl == -1:
+                    r.expire(global_key, global_window)
+                    g_ttl = global_window
+
+                if g_count > global_limit:
+                    logger.warning(f"Global AI Rate limit exceeded | count={g_count}")
+                    return JSONResponse(
+                        status_code=429,
+                        content={"detail": "Hệ thống AI hiện đang xử lý quá nhiều yêu cầu. Vui lòng thử lại sau ít phút."},
+                        headers={
+                            "Retry-After": str(g_ttl if g_ttl > 0 else global_window),
+                        },
+                    )
+            except Exception as e:
+                logger.warning(f"Global Rate limiter Redis error (bypassing): {e}")
+
+        # 2. Per-IP Rate Limit
         key = f"rl:{client_ip}"
         limit = settings.rate_limit_requests
         window = settings.rate_limit_window_seconds

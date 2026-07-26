@@ -37,6 +37,17 @@ export const useChat = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 429) {
+          try {
+            const errData = await response.json();
+            throw new Error(errData.detail || "Hệ thống đang quá tải. Vui lòng thử lại sau.");
+          } catch (e) {
+            if (e.message !== "Failed to fetch" && !e.message.includes("Unexpected token")) {
+                throw e;
+            }
+            throw new Error("Hệ thống đang quá tải. Vui lòng thử lại sau.");
+          }
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
